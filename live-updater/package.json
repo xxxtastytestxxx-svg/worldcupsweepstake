@@ -1,0 +1,13 @@
+{
+  "name": "worldcup-live-updater",
+  "version": "1.0.0",
+  "description": "Auto fetches live scores from football-data.org and updates Firebase",
+  "main": "updater.js",
+  "type": "module",
+  "scripts": {
+    "start": "node updater.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

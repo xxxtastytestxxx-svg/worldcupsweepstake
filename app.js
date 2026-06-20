@@ -636,14 +636,17 @@ function renderGroupView(groupId) {
                 html += `<div class="bg-black border border-red-900 rounded p-3 flex justify-between items-center shadow-inner">
                     <div class="text-right w-2/5 font-bold ${isAssigned(fixture[0]) ? 'text-[#D4AF37]' : 'text-white'}">${t1Name}</div>
                     <div class="w-1/5 text-center font-bold text-red-500 bg-gray-900 border border-red-800/50 rounded py-1 px-1 mx-2 flex flex-col justify-center">
-                        <span class="text-[9px] uppercase tracking-widest leading-none mb-0.5 animate-pulse">Live</span>
+                        <span class="text-[9px] uppercase tracking-widest leading-none mb-0.5 animate-pulse">${matchData.time || 'Live'}</span>
                         <span class="text-lg leading-none">${matchData.score1} - ${matchData.score2}</span>
                     </div>
                     <div class="text-left w-2/5 font-bold ${isAssigned(fixture[1]) ? 'text-[#D4AF37]' : 'text-white'}">${t2Name}</div></div>`;
             } else {
                 html += `<div class="bg-black border border-gray-700 rounded p-3 flex justify-between items-center shadow-inner">
                     <div class="text-right w-2/5 font-bold ${isAssigned(fixture[0]) ? 'text-[#D4AF37]' : 'text-white'}">${t1Name}</div>
-                    <div class="w-1/5 text-center font-bold text-lg text-[#D4AF37] bg-gray-900 rounded py-1 px-2 mx-2">${matchData.score1} - ${matchData.score2}</div>
+                    <div class="w-1/5 text-center font-bold text-lg text-[#D4AF37] bg-gray-900 rounded py-1 px-2 mx-2 flex flex-col justify-center leading-none">
+                        ${matchData.played ? '<span class="text-[8px] text-gray-500 uppercase tracking-widest leading-none mb-0.5">FT</span>' : ''}
+                        <span>${matchData.score1} - ${matchData.score2}</span>
+                    </div>
                     <div class="text-left w-2/5 font-bold ${isAssigned(fixture[1]) ? 'text-[#D4AF37]' : 'text-white'}">${t2Name}</div></div>`;
             }
         } else {
@@ -851,7 +854,8 @@ function renderKnockoutsView(round) {
             : `bg-gray-900 border ${res && res.inProgress ? 'border-red-900/50' : 'border-gray-700'} rounded-lg p-4 shadow-lg flex flex-col justify-between`;
 
         const headerClass = isFinal ? "text-lg font-black text-[#D4AF37]" : "text-xs font-bold text-gray-500";
-        const liveIndicator = (res && res.inProgress) ? `<div class="text-center w-full text-[10px] text-red-500 uppercase tracking-widest font-bold animate-pulse mt-3">Live Score</div>` : ``;
+        let liveIndicator = (res && res.inProgress) ? `<div class="text-center w-full text-[10px] text-red-500 uppercase tracking-widest font-bold animate-pulse mt-3">${res.time || 'Live Score'}</div>` : ``;
+        if (res && res.played && !res.inProgress) liveIndicator = `<div class="text-center w-full text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-3">FT</div>`;
 
         html += `
             <div class="${containerClass}">
@@ -901,7 +905,7 @@ function renderFullBracketView(target) {
         }
 
         return `<div class="w-48 md:w-56 bg-black border ${res?.inProgress ? 'border-red-900/80 shadow-[0_0_10px_rgba(220,38,38,0.3)]' : 'border-gray-700'} rounded-lg p-2 text-xs shadow-lg flex flex-col justify-center h-[64px] md:h-[72px] relative z-10 transition-transform hover:scale-[1.02]">
-            <div class="text-gray-500 mb-1 flex justify-between items-center"><span class="text-[9px] md:text-[10px] uppercase tracking-wider font-bold">${match.title || match.id}</span><span class="text-gray-600 font-normal text-[9px] md:text-[10px] whitespace-nowrap">${match.date ? match.date.split(',')[0] : ''}</span></div>
+            <div class="text-gray-500 mb-1 flex justify-between items-center"><span class="text-[9px] md:text-[10px] uppercase tracking-wider font-bold">${match.title || match.id}</span><span class="text-gray-600 font-normal text-[9px] md:text-[10px] whitespace-nowrap">${res?.inProgress ? `<span class="text-red-500 animate-pulse font-bold">${res.time || 'LIVE'}</span>` : (res?.played ? 'FT' : (match.date ? match.date.split(',')[0] : ''))}</span></div>
             <div class="flex justify-between items-center mb-0.5"><span class="truncate ${t1Col} font-bold mr-2 text-[11px] md:text-xs">${t1Str}</span><span class="font-bold ${res?.inProgress ? 'text-red-500' : 'text-[#D4AF37]'} shrink-0 text-xs">${s1}</span></div>
             <div class="flex justify-between items-center"><span class="truncate ${t2Col} font-bold mr-2 text-[11px] md:text-xs">${t2Str}</span><span class="font-bold ${res?.inProgress ? 'text-red-500' : 'text-[#D4AF37]'} shrink-0 text-xs">${s2}</span></div>
         </div>`;
@@ -1069,9 +1073,10 @@ function renderFixturesView() {
                     s2 = `<span class="text-[10px] text-gray-400 font-normal">(${res.pen2})</span> ${s2}`;
                 }
 
+                const timeStr = res.time ? `<span class="text-[8px] md:text-[9px] uppercase tracking-widest block text-center mb-0.5 leading-none">${res.time}</span>` : '';
                 const scoreBox = res.inProgress
-                    ? `<div class="bg-gray-900 border border-red-800/50 rounded px-1.5 py-0.5 text-red-500 font-bold text-xs md:text-sm tracking-wider flex items-center shadow-[0_0_8px_rgba(220,38,38,0.3)] animate-pulse mx-1 shrink-0 whitespace-nowrap min-w-[50px] justify-center">${s1} - ${s2}</div>`
-                    : `<div class="bg-gray-900 rounded px-1.5 py-0.5 text-[#D4AF37] font-bold text-xs md:text-sm tracking-wider mx-1 shrink-0 whitespace-nowrap min-w-[50px] text-center">${s1} - ${s2}</div>`;
+                    ? `<div class="bg-gray-900 border border-red-800/50 rounded px-1.5 py-0.5 text-red-500 font-bold text-xs md:text-sm tracking-wider flex flex-col items-center shadow-[0_0_8px_rgba(220,38,38,0.3)] animate-pulse mx-1 shrink-0 whitespace-nowrap min-w-[50px] justify-center">${timeStr}<span>${s1} - ${s2}</span></div>`
+                    : `<div class="bg-gray-900 rounded px-1.5 py-0.5 text-[#D4AF37] font-bold text-xs md:text-sm tracking-wider mx-1 shrink-0 whitespace-nowrap min-w-[50px] text-center flex flex-col justify-center">${res.played ? '<span class="text-[8px] text-gray-500 uppercase tracking-widest block mb-0.5 leading-none">FT</span>' : ''}<span>${s1} - ${s2}</span></div>`;
 
                 matchUI = `<div class="flex justify-between items-center w-full max-w-[280px] md:max-w-md mx-auto">
                     <div class="text-right flex-1 leading-tight truncate px-1">${getFormattedTeamName(m.t1)}</div>
