@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grosvenor Bournemouth World Cup Sweepstakes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .premium-scroll::-webkit-scrollbar { height: 6px; }
+        .premium-scroll::-webkit-scrollbar-track { background: #111827; border-radius: 8px; margin: 0 10px; }
+        .premium-scroll::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.4); border-radius: 8px; }
+        .premium-scroll::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.8); }
+        @media (max-width: 768px) {
+            .premium-scroll::-webkit-scrollbar { display: none; }
+            .premium-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        }
+    </style>
+</head>
+<body class="bg-black text-white font-sans antialiased pb-20">
+
+    <header class="bg-black sticky top-0 z-50 shadow-[0_4px_20px_rgba(0,0,0,0.9)]">
+        <div class="border-b border-[#D4AF37]">
+            <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3 md:space-x-4">
+                    <img src="GC.png" alt="Grosvenor Casinos" class="h-8 md:h-10 object-contain drop-shadow-md">
+                    <h1 class="text-sm md:text-xl font-bold tracking-widest text-[#D4AF37] uppercase">Grosvenor Bournemouth World Cup Sweepstakes</h1>
+                </div>
+                <div id="global-live-badge" class="text-[10px] md:text-xs text-black bg-[#D4AF37] px-2 md:px-3 py-1 rounded uppercase font-bold tracking-wider shadow-[0_0_10px_rgba(212,175,55,0.5)] transition-all duration-300 ml-3 shrink-0">
+                    Live
+                </div>
+            </div>
+        </div>
+        
+        <div class="max-w-5xl mx-auto px-4 bg-black pt-2">
+            <div class="flex w-full border-b border-gray-800 overflow-x-auto premium-scroll">
+                <button onclick="switchMainTab('groups')" id="main-tab-groups" class="flex-1 py-3 px-4 text-center text-[#D4AF37] border-b-2 border-[#D4AF37] font-bold tracking-wider uppercase transition-all text-xs md:text-base whitespace-nowrap">Group Stages</button>
+                <button onclick="switchMainTab('knockouts')" id="main-tab-knockouts" class="flex-1 py-3 px-4 text-center text-gray-500 border-b-2 border-transparent font-bold tracking-wider uppercase hover:text-white transition-all text-xs md:text-base whitespace-nowrap">Knockouts</button>
+                <button onclick="switchMainTab('status')" id="main-tab-status" class="flex-1 py-3 px-4 text-center text-gray-500 border-b-2 border-transparent font-bold tracking-wider uppercase hover:text-white transition-all text-xs md:text-base whitespace-nowrap">Status</button>
+                <button onclick="switchMainTab('fixtures')" id="main-tab-fixtures" class="flex-1 py-3 px-4 text-center text-gray-500 border-b-2 border-transparent font-bold tracking-wider uppercase hover:text-white transition-all text-xs md:text-base whitespace-nowrap">Fixtures</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 mt-6">
+        
+        <div id="view-groups" class="block">
+            <div class="flex overflow-x-auto space-x-3 mb-6 pb-2 premium-scroll" id="group-subtabs"></div>
+            <div id="groups-content-container" class="bg-gray-900 border border-[#D4AF37] rounded-lg p-4 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+                <h2 id="current-group-title" class="text-xl font-bold text-[#D4AF37] mb-4 text-center transition-all">Group A</h2>
+                <div id="group-table-target" class="overflow-x-auto">
+                    <p class="text-gray-500 text-center py-8">Loading data...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-knockouts" class="hidden">
+            <div class="flex overflow-x-auto space-x-3 mb-6 pb-2 premium-scroll">
+                <button onclick="switchKnockoutTab('r32')" id="ko-tab-r32" class="ko-subtab px-5 py-2 rounded-full border border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all"><span class="md:hidden">R32</span><span class="hidden md:inline">Round of 32</span></button>
+                <button onclick="switchKnockoutTab('r16')" id="ko-tab-r16" class="ko-subtab px-5 py-2 rounded-full border border-gray-700 text-gray-400 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all"><span class="md:hidden">R16</span><span class="hidden md:inline">Round of 16</span></button>
+                <button onclick="switchKnockoutTab('qf')" id="ko-tab-qf" class="ko-subtab px-5 py-2 rounded-full border border-gray-700 text-gray-400 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all"><span class="md:hidden">QF</span><span class="hidden md:inline">Quarter Finals</span></button>
+                <button onclick="switchKnockoutTab('sf')" id="ko-tab-sf" class="ko-subtab px-5 py-2 rounded-full border border-gray-700 text-gray-400 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all"><span class="md:hidden">SF</span><span class="hidden md:inline">Semi Finals</span></button>
+                <button onclick="switchKnockoutTab('finals')" id="ko-tab-finals" class="ko-subtab px-5 py-2 rounded-full border border-gray-700 text-gray-400 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all"><span class="md:hidden">F</span><span class="hidden md:inline">Finals</span></button>
+            </div>
+            <div class="bg-gray-900 border border-[#D4AF37] rounded-lg p-4 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+                <h2 id="current-ko-title" class="text-xl font-bold text-[#D4AF37] mb-4 text-center uppercase tracking-widest">Round of 32</h2>
+                <div id="knockout-target">
+                    <p class="text-gray-500 text-center py-8">Loading bracket...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-status" class="hidden">
+            <div class="bg-gray-900 border border-[#D4AF37] rounded-lg p-6 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+                <div id="status-header" class="text-center mb-8"></div>
+                <div id="status-target"><p class="text-gray-500 text-center py-8">Calculating tournament status...</p></div>
+                
+                <div class="mt-12 border-t border-gray-800 pt-8">
+                    <h3 class="text-[#D4AF37] text-lg font-bold uppercase tracking-widest text-center mb-6">Prize Pool</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-black border border-gray-700 rounded-lg p-4 text-center shadow-lg">
+                            <div class="text-2xl mb-2">🏆</div><div class="text-xl font-bold text-white mb-1">Winner</div><div class="text-[#D4AF37] font-extrabold text-2xl">£65 Cash</div>
+                        </div>
+                        <div class="bg-black border border-gray-700 rounded-lg p-4 text-center shadow-lg">
+                            <div class="text-2xl mb-2">🥈</div><div class="text-xl font-bold text-white mb-1">Runner Up</div><div class="text-gray-300 font-extrabold text-lg">£40 Amazon Voucher</div>
+                        </div>
+                        <div class="bg-black border border-gray-700 rounded-lg p-4 text-center shadow-lg">
+                            <div class="text-2xl mb-2">🥉</div><div class="text-xl font-bold text-white mb-1">Third Place</div><div class="text-gray-300 font-extrabold text-lg">£20 Amazon Voucher</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 bg-gray-800 border border-gray-600 rounded-lg p-4 text-center">
+                        <span class="text-lg mb-1 block">🎯 <span class="font-bold text-white uppercase tracking-wider">Pot B Bounty</span></span>
+                        <p class="text-gray-300 text-sm">Any team member with a Pot B team that reaches the Quarter Finals or better wins a <strong class="text-[#D4AF37]">£10 Amazon Voucher</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-fixtures" class="hidden">
+            <div class="bg-black border border-[#D4AF37] rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.8)] overflow-hidden">
+                <h2 class="text-xl font-bold text-[#D4AF37] bg-gray-900 p-4 border-b border-gray-800 text-center uppercase tracking-widest">Full Fixture List</h2>
+                <div id="fixtures-target" class="flex flex-col text-white">
+                    <p class="text-gray-500 text-center py-8">Loading fixtures...</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const groupSubtabsContainer = document.getElementById('group-subtabs');
+        const groups = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+        
+        groups.forEach((group, index) => {
+            const isActive = index === 0;
+            const btn = document.createElement('button');
+            btn.className = `group-subtab px-5 py-2 rounded-full border whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all ${isActive ? 'border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10' : 'border-gray-700 text-gray-400 hover:border-gray-500'}`;
+            btn.innerHTML = `<span class="md:hidden">${group}</span><span class="hidden md:inline">Group ${group}</span>`;
+            btn.onclick = () => switchGroupTab(group, btn);
+            groupSubtabsContainer.appendChild(btn);
+        });
+
+        const thirdPlaceBtn = document.createElement('button');
+        thirdPlaceBtn.className = `group-subtab px-5 py-2 rounded-full border border-gray-700 text-gray-400 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all hover:border-gray-500`;
+        thirdPlaceBtn.innerHTML = `<span class="md:hidden">3rd</span><span class="hidden md:inline">3rd Place Table</span>`;
+        thirdPlaceBtn.onclick = () => switchGroupTab('3rd', thirdPlaceBtn);
+        groupSubtabsContainer.appendChild(thirdPlaceBtn);
+
+        function switchMainTab(tab) {
+            // Scroll safely to the top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            ['groups', 'knockouts', 'status', 'fixtures'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`main-tab-${t}`).className = "flex-1 py-3 px-4 text-center text-gray-500 border-b-2 border-transparent font-bold tracking-wider uppercase hover:text-white transition-all text-xs md:text-base whitespace-nowrap";
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`main-tab-${tab}`).className = "flex-1 py-3 px-4 text-center text-[#D4AF37] border-b-2 border-[#D4AF37] font-bold tracking-wider uppercase transition-all text-xs md:text-base whitespace-nowrap";
+            
+            window.dispatchEvent(new CustomEvent('mainTabChanged', { detail: tab }));
+        }
+
+        function switchGroupTab(groupId, clickedBtn) {
+            document.querySelectorAll('.group-subtab').forEach(btn => { btn.className = "group-subtab px-5 py-2 rounded-full border border-gray-700 text-gray-400 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all hover:border-gray-500"; });
+            clickedBtn.className = "group-subtab px-5 py-2 rounded-full border border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all";
+            window.dispatchEvent(new CustomEvent('groupTabChanged', { detail: groupId }));
+        }
+
+        function switchKnockoutTab(koId) {
+            document.querySelectorAll('.ko-subtab').forEach(btn => { btn.className = "ko-subtab px-5 py-2 rounded-full border border-gray-700 text-gray-400 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all hover:border-gray-500"; });
+            const activeBtn = document.getElementById(`ko-tab-${koId}`);
+            activeBtn.className = "ko-subtab px-5 py-2 rounded-full border border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10 whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-all";
+            const titles = { 'r32': 'Round of 32', 'r16': 'Round of 16', 'qf': 'Quarter Finals', 'sf': 'Semi Finals', 'finals': 'Finals & 3rd Place' };
+            document.getElementById('current-ko-title').innerText = titles[koId];
+            window.dispatchEvent(new CustomEvent('koTabChanged', { detail: koId }));
+        }
+    </script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

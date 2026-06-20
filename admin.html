@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grosvenor Bournemouth World Cup Sweepstakes - Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white font-sans antialiased pb-20">
+
+    <header class="bg-gray-900 border-b border-[#D4AF37] sticky top-0 z-50 shadow-[0_4px_20px_rgba(212,175,55,0.15)]">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <img src="GC.png" alt="Grosvenor" class="h-8 object-contain drop-shadow-md hidden sm:block">
+                <div>
+                    <h1 class="text-sm md:text-xl font-bold tracking-widest text-[#D4AF37] uppercase">Grosvenor Bournemouth World Cup Sweepstakes</h1>
+                    <p class="text-xs text-gray-400 tracking-wide mt-1">Admin Control Room</p>
+                </div>
+            </div>
+            <a href="index.html" class="text-xs border border-[#D4AF37] text-[#D4AF37] px-4 py-2 rounded uppercase font-bold tracking-wider hover:bg-[#D4AF37] hover:text-black transition-colors whitespace-nowrap ml-4">
+                View Live Site
+            </a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 mt-8 space-y-8">
+
+        <!-- GROUP MATCHES SECTION -->
+        <section class="bg-gray-900 border border-gray-800 rounded-lg p-6 shadow-lg">
+            <div class="border-b border-gray-800 pb-4 mb-6">
+                <h2 class="text-xl font-bold text-white uppercase tracking-wider">Group Match Scores</h2>
+                <p class="text-sm text-gray-400 mt-1">Log standard group fixtures, fair play deductions, or set them as Live/In-Progress.</p>
+            </div>
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Filter by Group</label>
+                        <select id="group-filter" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] outline-none appearance-none">
+                            <option value="" disabled selected>-- Select Group --</option>
+                            <option value="A">Group A</option><option value="B">Group B</option>
+                            <option value="C">Group C</option><option value="D">Group D</option>
+                            <option value="E">Group E</option><option value="F">Group F</option>
+                            <option value="G">Group G</option><option value="H">Group H</option>
+                            <option value="I">Group I</option><option value="J">Group J</option>
+                            <option value="K">Group K</option><option value="L">Group L</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Select Match</label>
+                        <select id="match-select" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] outline-none appearance-none" disabled>
+                            <option value="" disabled selected>-- Select Match --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-black border border-gray-800 p-6 rounded text-center">
+                    <div class="flex justify-center items-center space-x-6">
+                        <div class="flex flex-col items-center w-1/3">
+                            <span id="team1-name" class="font-bold text-lg mb-2">Team 1</span>
+                            <input type="number" id="team1-score" min="0" class="w-16 bg-gray-900 border border-[#D4AF37] text-white text-center text-2xl rounded p-2 focus:outline-none">
+                        </div>
+                        <div class="text-gray-500 font-bold text-xl px-4">VS</div>
+                        <div class="flex flex-col items-center w-1/3">
+                            <span id="team2-name" class="font-bold text-lg mb-2">Team 2</span>
+                            <input type="number" id="team2-score" min="0" class="w-16 bg-gray-900 border border-[#D4AF37] text-white text-center text-2xl rounded p-2 focus:outline-none">
+                        </div>
+                    </div>
+                    
+                    <!-- FAIR PLAY / DISCIPLINARY INPUTS -->
+                    <div class="mt-6 border-t border-gray-800 pt-4 w-full">
+                        <h3 class="text-[#D4AF37] text-[10px] uppercase tracking-widest font-bold mb-3">Disciplinary Deductions (Tiebreaker)</h3>
+                        <div class="flex justify-between space-x-4 max-w-sm mx-auto">
+                            <div class="w-1/2 grid grid-cols-2 gap-2 text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                <div>YC<input type="number" id="t1-yc" min="0" placeholder="0" class="w-full mt-1 bg-gray-900 border border-gray-700 rounded p-1 text-white text-center font-normal"></div>
+                                <div>IRC<input type="number" id="t1-irc" min="0" placeholder="0" class="w-full mt-1 bg-gray-900 border border-gray-700 rounded p-1 text-white text-center font-normal"></div>
+                                <div>DRC<input type="number" id="t1-drc" min="0" placeholder="0" class="w-full mt-1 bg-gray-900 border border-gray-700 rounded p-1 text-white text-center font-normal"></div>
+                                <div>Y+D<input type="number" id="t1-ydrc" min="0" placeholder="0" class="w-full mt-1 bg-gray-900 border border-gray-700 rounded p-1 text-white text-center font-normal"></div>
+                            </div>
+                            <div class="w-1/2 grid grid-cols-2 gap-2 text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                <div>YC<input type="number" id="t2-yc" min="0" placeholder="0" class="w-full mt-1 bg-gray-900 border border-gray-700 rounded p-1 text-white text-center font-normal"></div>
+                                <div>IRC<input type="number" id="t2-irc" min="0" placeholder="0" class="w-full mt-1 bg-gray-900 border border-gray-700 rounded p-1 text-white text-center font-normal"></div>
+                                <div>DRC<input type="number" id="t2-drc" min="0" placeholder="0" class="w-full mt-1 bg-gray-900 border border-gray-700 rounded p-1 text-white text-center font-normal"></div>
+                                <div>Y+D<input type="number" id="t2-ydrc" min="0" placeholder="0" class="w-full mt-1 bg-gray-900 border border-gray-700 rounded p-1 text-white text-center font-normal"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center items-center mt-6 mb-6">
+                        <label class="flex items-center space-x-2 text-sm cursor-pointer bg-gray-900 border border-red-900/50 px-6 py-2 rounded text-red-400 hover:bg-gray-800 transition-colors">
+                            <input type="checkbox" id="group-in-progress-check" class="accent-red-500 w-4 h-4">
+                            <span class="font-bold tracking-wider uppercase">Match in Progress (Live)</span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row justify-center space-y-3 md:space-y-0 md:space-x-4">
+                        <button id="save-score-btn" class="bg-[#D4AF37] text-black font-bold uppercase tracking-wider rounded px-8 py-3 hover:bg-yellow-500 transition-colors" disabled>Publish Result</button>
+                        <button id="clear-score-btn" class="bg-red-900 text-white border border-red-700 font-bold uppercase tracking-wider rounded px-8 py-3 hover:bg-red-700 transition-colors" disabled>Clear/Delete Result</button>
+                    </div>
+                    <p id="score-status" class="text-sm mt-4 hidden"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- KNOCKOUT MATCHES SECTION -->
+        <section class="bg-gray-900 border border-[#D4AF37] rounded-lg p-6 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
+            <div class="border-b border-gray-800 pb-4 mb-6">
+                <h2 class="text-xl font-bold text-[#D4AF37] uppercase tracking-wider">Knockout Match Scores</h2>
+                <p class="text-sm text-gray-400 mt-1">Log Knockout results, Extra Time, Penalties, and Live Matches.</p>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Select Round</label>
+                        <select id="ko-round-select" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] outline-none appearance-none">
+                            <option value="" disabled selected>-- Select Round --</option>
+                            <option value="R32">Round of 32</option>
+                            <option value="R16">Round of 16</option>
+                            <option value="QF">Quarter Finals</option>
+                            <option value="SF">Semi Finals</option>
+                            <option value="FINALS">Finals & 3rd Place Playoff</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Select Match</label>
+                        <select id="ko-match-select" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] outline-none appearance-none" disabled>
+                            <option value="" disabled selected>-- Select Match --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-black border border-gray-800 p-6 rounded">
+                    <div class="flex justify-center items-center space-x-6 mb-6">
+                        <div class="flex flex-col items-center w-1/3">
+                            <span class="font-bold text-gray-400 text-sm mb-2">Team 1 Score</span>
+                            <input type="number" id="ko-team1-score" min="0" class="w-16 bg-gray-900 border border-[#D4AF37] text-white text-center text-2xl rounded p-2 focus:outline-none">
+                        </div>
+                        <div class="text-gray-500 font-bold text-xl px-4">VS</div>
+                        <div class="flex flex-col items-center w-1/3">
+                            <span class="font-bold text-gray-400 text-sm mb-2">Team 2 Score</span>
+                            <input type="number" id="ko-team2-score" min="0" class="w-16 bg-gray-900 border border-[#D4AF37] text-white text-center text-2xl rounded p-2 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center space-x-6 border-t border-gray-800 pt-4 mb-4">
+                        <label class="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
+                            <input type="checkbox" id="ko-aet-check" class="accent-[#D4AF37] w-4 h-4">
+                            <span>After Extra Time (AET)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm text-gray-300 cursor-pointer">
+                            <input type="checkbox" id="ko-pens-check" class="accent-[#D4AF37] w-4 h-4">
+                            <span>Went to Penalties</span>
+                        </label>
+                    </div>
+
+                    <div id="penalties-container" class="hidden flex justify-center items-center space-x-6 bg-gray-900 p-4 rounded border border-gray-700 mb-6">
+                        <div class="flex flex-col items-center w-1/3">
+                            <span class="text-xs text-gray-400 uppercase tracking-widest mb-1">T1 Pens</span>
+                            <input type="number" id="ko-pen1-score" min="0" class="w-16 bg-black border border-gray-600 text-white text-center text-xl rounded p-1 focus:outline-none">
+                        </div>
+                        <div class="text-gray-500 font-bold text-sm px-4">PENS</div>
+                        <div class="flex flex-col items-center w-1/3">
+                            <span class="text-xs text-gray-400 uppercase tracking-widest mb-1">T2 Pens</span>
+                            <input type="number" id="ko-pen2-score" min="0" class="w-16 bg-black border border-gray-600 text-white text-center text-xl rounded p-1 focus:outline-none">
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center items-center mt-2 mb-6">
+                        <label class="flex items-center space-x-2 text-sm cursor-pointer bg-gray-900 border border-red-900/50 px-6 py-2 rounded text-red-400 hover:bg-gray-800 transition-colors">
+                            <input type="checkbox" id="ko-in-progress-check" class="accent-red-500 w-4 h-4">
+                            <span class="font-bold tracking-wider uppercase">Match in Progress (Live)</span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row justify-center space-y-3 md:space-y-0 md:space-x-4">
+                        <button id="ko-save-btn" class="bg-[#D4AF37] text-black font-bold uppercase tracking-wider rounded px-8 py-3 hover:bg-yellow-500 transition-colors" disabled>Publish KO Result</button>
+                        <button id="ko-clear-btn" class="bg-red-900 text-white border border-red-700 font-bold uppercase tracking-wider rounded px-8 py-3 hover:bg-red-700 transition-colors" disabled>Clear KO Result</button>
+                    </div>
+                    <p id="ko-score-status" class="text-sm mt-4 text-center hidden"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TV BROADCAST SECTION -->
+        <section class="bg-gray-900 border border-gray-800 rounded-lg p-6 shadow-lg">
+            <div class="border-b border-gray-800 pb-4 mb-6">
+                <h2 class="text-xl font-bold text-white uppercase tracking-wider">Knockout TV Broadcasts</h2>
+                <p class="text-sm text-gray-400 mt-1">Assign BBC or ITV to knockout matches.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Select Match</label>
+                    <select id="tv-ko-match-select" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] outline-none appearance-none">
+                        <option value="" disabled selected>-- Select KO Match --</option>
+                        <!-- Injected by JS -->
+                    </select>
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Broadcaster</label>
+                    <select id="tv-channel-select" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] outline-none appearance-none" disabled>
+                        <option value="">-- TBD --</option>
+                        <option value="BBC">BBC</option>
+                        <option value="ITV">ITV</option>
+                    </select>
+                </div>
+                <div class="col-span-1">
+                    <button id="save-tv-btn" class="w-full bg-[#D4AF37] text-black font-bold uppercase tracking-wider rounded p-3 hover:bg-yellow-500 transition-colors" disabled>Save TV</button>
+                </div>
+                <div class="col-span-1">
+                    <button id="clear-tv-btn" class="w-full bg-red-900 text-white border border-red-700 font-bold uppercase tracking-wider rounded p-3 hover:bg-red-700 transition-colors" disabled>Clear TV</button>
+                </div>
+            </div>
+            <p id="tv-status" class="text-sm mt-4 hidden"></p>
+        </section>
+
+        <!-- ASSIGN TEAMS SECTION -->
+        <section class="bg-gray-900 border border-gray-800 rounded-lg p-6 shadow-lg">
+            <div class="border-b border-gray-800 pb-4 mb-6">
+                <h2 class="text-xl font-bold text-white uppercase tracking-wider">Assign & Unassign Teams</h2>
+                <p class="text-sm text-gray-400 mt-1">Link your team members to their drawn teams.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end mb-6">
+                <div class="col-span-1">
+                    <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Team Member Name</label>
+                    <input type="text" id="owner-input" placeholder="e.g. John Doe" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] focus:outline-none">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Pot A Team</label>
+                    <select id="team-select-a" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] outline-none appearance-none"></select>
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-xs font-bold text-[#D4AF37] uppercase mb-2">Pot B Team</label>
+                    <select id="team-select-b" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-[#D4AF37] outline-none appearance-none"></select>
+                </div>
+                <div class="col-span-1">
+                    <button id="save-owner-btn" class="w-full bg-[#D4AF37] text-black font-bold uppercase tracking-wider rounded p-3 hover:bg-yellow-500 transition-colors">Assign Teams</button>
+                </div>
+            </div>
+            <p id="owner-status" class="text-sm mt-4 hidden"></p>
+
+            <div class="border-t border-gray-800 pt-6 mt-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div class="col-span-1 md:col-span-3">
+                        <select id="remove-team-select" class="w-full bg-black border border-gray-700 text-white rounded p-3 focus:border-red-500 outline-none appearance-none"></select>
+                    </div>
+                    <div class="col-span-1">
+                        <button id="remove-owner-btn" class="w-full bg-red-900 text-white border border-red-700 font-bold uppercase tracking-wider rounded p-3 hover:bg-red-700 transition-colors">Unassign</button>
+                    </div>
+                </div>
+                <p id="remove-status" class="text-sm mt-4 hidden"></p>
+            </div>
+        </section>
+
+        <!-- DANGER ZONE: TESTING & RESETS -->
+        <section class="bg-red-900/20 border border-red-700 rounded-lg p-6 shadow-lg mt-8 mb-8">
+            <div class="border-b border-red-800 pb-4 mb-6">
+                <h2 class="text-xl font-bold text-red-500 uppercase tracking-wider">Testing & Reset Tools</h2>
+                <p class="text-sm text-red-200 mt-1">Use these tools to completely wipe match results and start fresh.</p>
+            </div>
+            
+            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                <button id="reset-groups-btn" class="w-full bg-black text-red-500 border border-red-700 font-bold uppercase tracking-wider rounded p-3 hover:bg-red-800 hover:text-white transition-colors">
+                    Wipe ALL Group Results
+                </button>
+                <button id="reset-kos-btn" class="w-full bg-black text-red-500 border border-red-700 font-bold uppercase tracking-wider rounded p-3 hover:bg-red-800 hover:text-white transition-colors">
+                    Wipe ALL KO Results
+                </button>
+            </div>
+            <p id="reset-status" class="text-sm mt-4 text-center hidden"></p>
+        </section>
+
+    </main>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>
