@@ -37,6 +37,7 @@ const groupStages = {
 
 let dbTeams = {}; let dbMatches = {}; let dbCombinations = {};
 let activeMainTab = 'groups'; let activeGroupTab = 'A'; let activeKoTab = 'r32';
+let knockoutViewMode = 'rounds';
 
 onValue(ref(db, 'teams'), (snapshot) => { dbTeams = snapshot.val() || {}; renderCurrentView(); });
 onValue(ref(db, 'matches'), (snapshot) => { dbMatches = snapshot.val() || {}; renderCurrentView(); });
@@ -45,6 +46,7 @@ onValue(ref(db, 'combinations'), (snapshot) => { dbCombinations = snapshot.val()
 window.addEventListener('mainTabChanged', (e) => { activeMainTab = e.detail; renderCurrentView(); });
 window.addEventListener('groupTabChanged', (e) => { activeMainTab = 'groups'; activeGroupTab = e.detail; renderCurrentView(); });
 window.addEventListener('koTabChanged', (e) => { activeMainTab = 'knockouts'; activeKoTab = e.detail; renderCurrentView(); });
+window.addEventListener('toggleKoViewMode', () => { knockoutViewMode = knockoutViewMode === 'rounds' ? 'bracket' : 'rounds'; renderCurrentView(); });
 window.addEventListener('statusTabChanged', () => { activeMainTab = 'status'; renderCurrentView(); });
 
 function getDisplayName(code) {
@@ -67,8 +69,8 @@ function getGroupDirectMatchResult(groupId, codeA, codeB) {
 function getPlayedGroupMatchCount() {
     let playedCount = 0;
     Object.keys(groupStages).forEach(g => {
-        Object.values(dbMatches[g] || {}).forEach(m => { 
-            if (m && m.played && !m.inProgress) playedCount++; 
+        Object.values(dbMatches[g] || {}).forEach(m => {
+            if (m && m.played && !m.inProgress) playedCount++;
         });
     });
     return playedCount;
@@ -83,7 +85,7 @@ function getCurrentPhase() {
         const res = dbMatches['knockouts']?.[m.id];
         return res && res.played && !res.inProgress;
     }).length;
-    
+
     if (countPlayed(bracket.r32) < 16) return "Round of 32";
     if (countPlayed(bracket.r16) < 8) return "Round of 16";
     if (countPlayed(bracket.qf) < 4) return "Quarter Finals";
@@ -95,8 +97,8 @@ function updateGlobalLiveBadge() {
     let anyLive = false;
     Object.values(dbMatches || {}).forEach(groupOrKo => {
         if (groupOrKo && typeof groupOrKo === 'object') {
-            Object.values(groupOrKo).forEach(m => { 
-                if (m && m.played && m.inProgress) anyLive = true; 
+            Object.values(groupOrKo).forEach(m => {
+                if (m && m.played && m.inProgress) anyLive = true;
             });
         }
     });
@@ -114,20 +116,20 @@ function updateGlobalLiveBadge() {
 
 function getFixtureDetails(groupId, matchIndex) {
     const schedule = {
-        "A": [ {d: "Thu 11 Jun, 20:00 BST", c: "ITV"}, {d: "Fri 12 Jun, 03:00 BST", c: "ITV"}, {d: "Fri 19 Jun, 02:00 BST", c: "BBC"}, {d: "Thu 18 Jun, 17:00 BST", c: "BBC"}, {d: "Thu 25 Jun, 02:00 BST", c: "BBC"}, {d: "Thu 25 Jun, 02:00 BST", c: "BBC"} ],
-        "B": [ {d: "Fri 12 Jun, 20:00 BST", c: "BBC"}, {d: "Sat 13 Jun, 20:00 BST", c: "ITV"}, {d: "Thu 18 Jun, 23:00 BST", c: "ITV"}, {d: "Thu 18 Jun, 20:00 BST", c: "ITV"}, {d: "Wed 24 Jun, 20:00 BST", c: "ITV"}, {d: "Wed 24 Jun, 20:00 BST", c: "ITV"} ],
-        "C": [ {d: "Sat 13 Jun, 23:00 BST", c: "BBC"}, {d: "Sun 14 Jun, 02:00 BST", c: "BBC"}, {d: "Sat 20 Jun, 02:00 BST", c: "ITV"}, {d: "Fri 19 Jun, 23:00 BST", c: "ITV"}, {d: "Wed 24 Jun, 23:00 BST", c: "BBC"}, {d: "Wed 24 Jun, 23:00 BST", c: "BBC"} ],
-        "D": [ {d: "Sat 13 Jun, 02:00 BST", c: "BBC"}, {d: "Sun 14 Jun, 05:00 BST", c: "ITV"}, {d: "Fri 19 Jun, 20:00 BST", c: "BBC"}, {d: "Sat 20 Jun, 05:00 BST", c: "ITV"}, {d: "Fri 26 Jun, 03:00 BST", c: "ITV"}, {d: "Fri 26 Jun, 03:00 BST", c: "ITV"} ],
-        "E": [ {d: "Sun 14 Jun, 18:00 BST", c: "ITV"}, {d: "Mon 15 Jun, 00:00 BST", c: "BBC"}, {d: "Sat 20 Jun, 21:00 BST", c: "ITV"}, {d: "Sun 21 Jun, 01:00 BST", c: "BBC"}, {d: "Thu 25 Jun, 21:00 BST", c: "BBC"}, {d: "Thu 25 Jun, 21:00 BST", c: "BBC"} ],
-        "F": [ {d: "Sun 14 Jun, 21:00 BST", c: "ITV"}, {d: "Mon 15 Jun, 03:00 BST", c: "ITV"}, {d: "Sat 20 Jun, 18:00 BST", c: "BBC"}, {d: "Sun 21 Jun, 05:00 BST", c: "BBC"}, {d: "Fri 26 Jun, 00:00 BST", c: "BBC"}, {d: "Fri 26 Jun, 00:00 BST", c: "BBC"} ],
-        "G": [ {d: "Mon 15 Jun, 20:00 BST", c: "BBC"}, {d: "Tue 16 Jun, 02:00 BST", c: "BBC"}, {d: "Sun 21 Jun, 20:00 BST", c: "ITV"}, {d: "Mon 22 Jun, 02:00 BST", c: "ITV"}, {d: "Sat 27 Jun, 04:00 BST", c: "BBC"}, {d: "Sat 27 Jun, 04:00 BST", c: "BBC"} ],
-        "H": [ {d: "Mon 15 Jun, 17:00 BST", c: "ITV"}, {d: "Mon 15 Jun, 23:00 BST", c: "ITV"}, {d: "Sun 21 Jun, 17:00 BST", c: "ITV"}, {d: "Sun 21 Jun, 23:00 BST", c: "BBC"}, {d: "Sat 27 Jun, 01:00 BST", c: "ITV"}, {d: "Sat 27 Jun, 01:00 BST", c: "ITV"} ],
-        "I": [ {d: "Tue 16 Jun, 20:00 BST", c: "BBC"}, {d: "Tue 16 Jun, 23:00 BST", c: "BBC"}, {d: "Mon 22 Jun, 22:00 BST", c: "BBC"}, {d: "Tue 23 Jun, 01:00 BST", c: "ITV"}, {d: "Fri 26 Jun, 20:00 BST", c: "ITV"}, {d: "Fri 26 Jun, 20:00 BST", c: "ITV"} ],
-        "J": [ {d: "Wed 17 Jun, 02:00 BST", c: "ITV"}, {d: "Wed 17 Jun, 05:00 BST", c: "BBC"}, {d: "Mon 22 Jun, 18:00 BST", c: "BBC"}, {d: "Tue 23 Jun, 04:00 BST", c: "ITV"}, {d: "Sun 28 Jun, 03:00 BST", c: "BBC"}, {d: "Sun 28 Jun, 03:00 BST", c: "BBC"} ],
-        "K": [ {d: "Wed 17 Jun, 18:00 BST", c: "BBC"}, {d: "Thu 18 Jun, 03:00 BST", c: "BBC"}, {d: "Tue 23 Jun, 18:00 BST", c: "ITV"}, {d: "Wed 24 Jun, 03:00 BST", c: "ITV"}, {d: "Sun 28 Jun, 00:30 BST", c: "BBC"}, {d: "Sun 28 Jun, 00:30 BST", c: "BBC"} ],
-        "L": [ {d: "Wed 17 Jun, 21:00 BST", c: "ITV"}, {d: "Thu 18 Jun, 00:00 BST", c: "ITV"}, {d: "Tue 23 Jun, 21:00 BST", c: "BBC"}, {d: "Wed 24 Jun, 00:00 BST", c: "BBC"}, {d: "Sat 27 Jun, 22:00 BST", c: "ITV"}, {d: "Sat 27 Jun, 22:00 BST", c: "ITV"} ]
+        "A": [{ d: "Thu 11 Jun, 20:00 BST", c: "ITV" }, { d: "Fri 12 Jun, 03:00 BST", c: "ITV" }, { d: "Fri 19 Jun, 02:00 BST", c: "BBC" }, { d: "Thu 18 Jun, 17:00 BST", c: "BBC" }, { d: "Thu 25 Jun, 02:00 BST", c: "BBC" }, { d: "Thu 25 Jun, 02:00 BST", c: "BBC" }],
+        "B": [{ d: "Fri 12 Jun, 20:00 BST", c: "BBC" }, { d: "Sat 13 Jun, 20:00 BST", c: "ITV" }, { d: "Thu 18 Jun, 23:00 BST", c: "ITV" }, { d: "Thu 18 Jun, 20:00 BST", c: "ITV" }, { d: "Wed 24 Jun, 20:00 BST", c: "ITV" }, { d: "Wed 24 Jun, 20:00 BST", c: "ITV" }],
+        "C": [{ d: "Sat 13 Jun, 23:00 BST", c: "BBC" }, { d: "Sun 14 Jun, 02:00 BST", c: "BBC" }, { d: "Sat 20 Jun, 02:00 BST", c: "ITV" }, { d: "Fri 19 Jun, 23:00 BST", c: "ITV" }, { d: "Wed 24 Jun, 23:00 BST", c: "BBC" }, { d: "Wed 24 Jun, 23:00 BST", c: "BBC" }],
+        "D": [{ d: "Sat 13 Jun, 02:00 BST", c: "BBC" }, { d: "Sun 14 Jun, 05:00 BST", c: "ITV" }, { d: "Fri 19 Jun, 20:00 BST", c: "BBC" }, { d: "Sat 20 Jun, 05:00 BST", c: "ITV" }, { d: "Fri 26 Jun, 03:00 BST", c: "ITV" }, { d: "Fri 26 Jun, 03:00 BST", c: "ITV" }],
+        "E": [{ d: "Sun 14 Jun, 18:00 BST", c: "ITV" }, { d: "Mon 15 Jun, 00:00 BST", c: "BBC" }, { d: "Sat 20 Jun, 21:00 BST", c: "ITV" }, { d: "Sun 21 Jun, 01:00 BST", c: "BBC" }, { d: "Thu 25 Jun, 21:00 BST", c: "BBC" }, { d: "Thu 25 Jun, 21:00 BST", c: "BBC" }],
+        "F": [{ d: "Sun 14 Jun, 21:00 BST", c: "ITV" }, { d: "Mon 15 Jun, 03:00 BST", c: "ITV" }, { d: "Sat 20 Jun, 18:00 BST", c: "BBC" }, { d: "Sun 21 Jun, 05:00 BST", c: "BBC" }, { d: "Fri 26 Jun, 00:00 BST", c: "BBC" }, { d: "Fri 26 Jun, 00:00 BST", c: "BBC" }],
+        "G": [{ d: "Mon 15 Jun, 20:00 BST", c: "BBC" }, { d: "Tue 16 Jun, 02:00 BST", c: "BBC" }, { d: "Sun 21 Jun, 20:00 BST", c: "ITV" }, { d: "Mon 22 Jun, 02:00 BST", c: "ITV" }, { d: "Sat 27 Jun, 04:00 BST", c: "BBC" }, { d: "Sat 27 Jun, 04:00 BST", c: "BBC" }],
+        "H": [{ d: "Mon 15 Jun, 17:00 BST", c: "ITV" }, { d: "Mon 15 Jun, 23:00 BST", c: "ITV" }, { d: "Sun 21 Jun, 17:00 BST", c: "ITV" }, { d: "Sun 21 Jun, 23:00 BST", c: "BBC" }, { d: "Sat 27 Jun, 01:00 BST", c: "ITV" }, { d: "Sat 27 Jun, 01:00 BST", c: "ITV" }],
+        "I": [{ d: "Tue 16 Jun, 20:00 BST", c: "BBC" }, { d: "Tue 16 Jun, 23:00 BST", c: "BBC" }, { d: "Mon 22 Jun, 22:00 BST", c: "BBC" }, { d: "Tue 23 Jun, 01:00 BST", c: "ITV" }, { d: "Fri 26 Jun, 20:00 BST", c: "ITV" }, { d: "Fri 26 Jun, 20:00 BST", c: "ITV" }],
+        "J": [{ d: "Wed 17 Jun, 02:00 BST", c: "ITV" }, { d: "Wed 17 Jun, 05:00 BST", c: "BBC" }, { d: "Mon 22 Jun, 18:00 BST", c: "BBC" }, { d: "Tue 23 Jun, 04:00 BST", c: "ITV" }, { d: "Sun 28 Jun, 03:00 BST", c: "BBC" }, { d: "Sun 28 Jun, 03:00 BST", c: "BBC" }],
+        "K": [{ d: "Wed 17 Jun, 18:00 BST", c: "BBC" }, { d: "Thu 18 Jun, 03:00 BST", c: "BBC" }, { d: "Tue 23 Jun, 18:00 BST", c: "ITV" }, { d: "Wed 24 Jun, 03:00 BST", c: "ITV" }, { d: "Sun 28 Jun, 00:30 BST", c: "BBC" }, { d: "Sun 28 Jun, 00:30 BST", c: "BBC" }],
+        "L": [{ d: "Wed 17 Jun, 21:00 BST", c: "ITV" }, { d: "Thu 18 Jun, 00:00 BST", c: "ITV" }, { d: "Tue 23 Jun, 21:00 BST", c: "BBC" }, { d: "Wed 24 Jun, 00:00 BST", c: "BBC" }, { d: "Sat 27 Jun, 22:00 BST", c: "ITV" }, { d: "Sat 27 Jun, 22:00 BST", c: "ITV" }]
     };
-    return schedule[groupId][matchIndex] || {d: "TBC", c: ""};
+    return schedule[groupId][matchIndex] || { d: "TBC", c: "" };
 }
 
 function calculateGroup(groupId, includeLive = true) {
@@ -142,17 +144,17 @@ function calculateGroup(groupId, includeLive = true) {
         if (!t1 || !t2) return;
         t1.played++; t2.played++;
         t1.gf += match.score1; t1.ga += match.score2; t2.gf += match.score2; t2.ga += match.score1;
-        if (match.score1 > match.score2) { t1.won++; t1.pts += 3; t2.lost++; } 
-        else if (match.score1 < match.score2) { t2.won++; t2.pts += 3; t1.lost++; } 
+        if (match.score1 > match.score2) { t1.won++; t1.pts += 3; t2.lost++; }
+        else if (match.score1 < match.score2) { t2.won++; t2.pts += 3; t1.lost++; }
         else { t1.drawn++; t2.drawn++; t1.pts += 1; t2.pts += 1; }
-        
+
         if (match.t1c) t1.conduct -= (match.t1c.yc * 1 + match.t1c.irc * 3 + match.t1c.drc * 4 + match.t1c.ydrc * 5);
         if (match.t2c) t2.conduct -= (match.t2c.yc * 1 + match.t2c.irc * 3 + match.t2c.drc * 4 + match.t2c.ydrc * 5);
     });
     standings.forEach(t => t.gd = t.gf - t.ga);
     standings.sort((a, b) => {
-        if (b.pts !== a.pts) return b.pts - a.pts; 
-        
+        if (b.pts !== a.pts) return b.pts - a.pts;
+
         const h2h = validMatches.find(m => ((m.team1 === a.code && m.team2 === b.code) || (m.team1 === b.code && m.team2 === a.code)));
         let aH2hPts = 0, bH2hPts = 0, aH2hGd = 0, bH2hGd = 0, aH2hGf = 0, bH2hGf = 0;
         if (h2h) {
@@ -179,8 +181,8 @@ function calculateThirdPlaceStandings(includeLive = true) {
     const thirdPlacedTeams = [];
     Object.keys(groupStages).forEach(group => { thirdPlacedTeams.push(calculateGroup(group, includeLive)[2]); });
     thirdPlacedTeams.sort((a, b) => {
-        if (b.pts !== a.pts) return b.pts - a.pts; 
-        if (b.gd !== a.gd) return b.gd - a.gd; 
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        if (b.gd !== a.gd) return b.gd - a.gd;
         if (b.gf !== a.gf) return b.gf - a.gf;
         if (b.conduct !== a.conduct) return b.conduct - a.conduct;
         return teamsData[a.code].fifa - teamsData[b.code].fifa;
@@ -192,7 +194,7 @@ function getFullBracket(predict = true) {
     const ranks = {};
     Object.keys(groupStages).forEach(group => { ranks[group] = calculateGroup(group, predict); });
     const thirds = calculateThirdPlaceStandings(predict);
-    
+
     const top8Thirds = thirds.slice(0, 8);
     const comboString = top8Thirds.map(t => t.originGroup).sort().join('');
     const matrixRow = dbCombinations[comboString] || {};
@@ -210,7 +212,7 @@ function getFullBracket(predict = true) {
             if (pos === '1st') return ranks[grp][0].code;
             if (pos === '2nd') return ranks[grp][1].code;
         }
-        
+
         const groupMatches = dbMatches[grp] || {};
         const playedCount = Object.values(groupMatches).filter(m => m && m.played && !m.inProgress).length;
         if (playedCount === 6) {
@@ -218,8 +220,8 @@ function getFullBracket(predict = true) {
             if (pos === '2nd') return ranks[grp][1].code;
         } else {
             const t0 = ranks[grp][0]; const t1 = ranks[grp][1]; const t2 = ranks[grp][2];
-            const t1Max = t1.pts + (3 - t1.played)*3; 
-            const t2Max = t2.pts + (3 - t2.played)*3;
+            const t1Max = t1.pts + (3 - t1.played) * 3;
+            const t2Max = t2.pts + (3 - t2.played) * 3;
             if (pos === '1st' && t0.pts > t1Max) return t0.code;
             if (pos === '2nd' && t0.pts > t1Max && t1.pts > t2Max) return t1.code;
         }
@@ -305,31 +307,31 @@ function getTeamStatusData(code) {
     const phase = getCurrentPhase();
     const bracket = getFullBracket(true);
     const pot = teamsData[code].pot;
-    
+
     if (isGroupComplete) {
         const madeR32 = (bracket.r32 || []).some(m => m.t1 === code || m.t2 === code);
-        if (!madeR32) return 'red'; 
+        if (!madeR32) return 'red';
 
         let isGold = false, isSilver = false, isBronze = false;
         let lostAMatch = false, wonCurrentRound = false, reachedQF = false;
 
         const rounds = { 'Round of 32': 'r32', 'Round of 16': 'r16', 'Quarter Finals': 'qf', 'Semi Finals': 'sf', 'Finals': 'finals' };
-        
+
         ['r32', 'r16', 'qf', 'sf', 'finals'].forEach(r => {
             const match = (bracket[r] || []).find(m => m.t1 === code || m.t2 === code);
             if (match) {
                 if (r === 'qf' || r === 'sf' || r === 'finals') reachedQF = true;
                 const res = dbMatches['knockouts']?.[match.id];
-                
+
                 if (res && res.played && !res.inProgress) {
                     const isT1 = match.t1 === code;
                     let won = false;
-                    
+
                     if (res.score1 > res.score2) won = isT1;
                     else if (res.score2 > res.score1) won = !isT1;
                     else if (res.pens && res.pen1 > res.pen2) won = isT1;
                     else if (res.pens && res.pen2 > res.pen1) won = !isT1;
-                    
+
                     if (match.id === 'FIN') { if (won) isGold = true; else isSilver = true; }
                     else if (match.id === '3RD') { if (won) isBronze = true; else lostAMatch = true; }
                     else {
@@ -343,7 +345,7 @@ function getTeamStatusData(code) {
         if (isGold) return 'gold';
         if (isSilver) return 'silver';
         if (isBronze) return 'bronze';
-        
+
         const inUnplayed3rd = (bracket.finals || []).some(m => m.id === '3RD' && (m.t1 === code || m.t2 === code) && !(dbMatches['knockouts']?.['3RD']?.played && !dbMatches['knockouts']?.['3RD']?.inProgress));
         if (inUnplayed3rd) return 'blue';
 
@@ -353,12 +355,12 @@ function getTeamStatusData(code) {
         }
         if (wonCurrentRound) return 'green';
         return 'blue';
-    } 
-    
+    }
+
     const groupId = Object.keys(groupStages).find(g => groupStages[g].includes(code));
     const standings = calculateGroup(groupId, true);
     const tData = standings.find(t => t.code === code);
-    
+
     const maxPts = tData.pts + (3 - tData.played) * 3;
     const thirdEntry = standings[2];
     if (maxPts < thirdEntry.pts) return 'red';
@@ -368,7 +370,7 @@ function getTeamStatusData(code) {
         : null;
     if (tieH2HTeam === -1) return 'red';
 
-    const othersMax = standings.filter(t => t.code !== code).map(t => t.pts + (3 - t.played) * 3).sort((a,b)=>b-a);
+    const othersMax = standings.filter(t => t.code !== code).map(t => t.pts + (3 - t.played) * 3).sort((a, b) => b - a);
     const thirdBestMax = othersMax[1] || 0;
     if (tData.pts > thirdBestMax) return 'green';
 
@@ -379,10 +381,10 @@ function resolvePrizeWinner(matchId, wantWinner) {
     const res = dbMatches['knockouts']?.[matchId];
     if (!res || !res.played || res.inProgress) return null;
     const bracket = getFullBracket(true);
-    
+
     let roundKey = 'finals';
     if (matchId.startsWith('SF')) roundKey = 'sf';
-    
+
     const matchObj = (bracket[roundKey] || []).find(m => m.id === matchId);
     if (!matchObj) return null;
 
@@ -401,7 +403,7 @@ function getPotBBountyWinners() {
     const bracket = getFullBracket(true);
     const winners = [];
     const qfTeams = new Set();
-    
+
     (bracket.qf || []).forEach(m => {
         if (m.t1 && !m.t1.startsWith("Winner") && !m.t1.startsWith("1st") && !m.t1.startsWith("2nd") && !m.t1.startsWith("3rd") && !m.t1.startsWith("Match")) qfTeams.add(m.t1);
         if (m.t2 && !m.t2.startsWith("Winner") && !m.t2.startsWith("1st") && !m.t2.startsWith("2nd") && !m.t2.startsWith("3rd") && !m.t2.startsWith("Match")) qfTeams.add(m.t2);
@@ -434,7 +436,7 @@ function renderStatusView() {
     const target = document.getElementById('status-target');
     const header = document.getElementById('status-header');
     const phase = getCurrentPhase();
-    
+
     header.innerHTML = `
         <h2 class="text-3xl font-extrabold text-white tracking-widest uppercase mb-2">Tournament Status</h2>
         <div class="inline-block bg-[#D4AF37]/20 border border-[#D4AF37] text-[#D4AF37] px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(212,175,55,0.4)]">
@@ -472,8 +474,8 @@ function renderStatusView() {
     const assigned = allTeams.filter(t => t.owner);
     const unassigned = allTeams.filter(t => !t.owner);
 
-    const unassignedBlock = unassigned.length > 0 
-        ? `<div class="mb-8 opacity-80"><h3 class="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-800 pb-2">Unassigned Teams</h3>${buildGrid(unassigned)}</div>` 
+    const unassignedBlock = unassigned.length > 0
+        ? `<div class="mb-8 opacity-80"><h3 class="text-lg font-bold text-gray-400 uppercase tracking-wider mb-4 border-b border-gray-800 pb-2">Unassigned Teams</h3>${buildGrid(unassigned)}</div>`
         : '';
 
     target.innerHTML = `
@@ -555,7 +557,7 @@ function renderStatusView() {
 function renderGroupView(groupId) {
     const target = document.getElementById('group-table-target');
     const groupMatches = dbMatches[groupId] || {};
-    
+
     let groupHasLiveMatch = false;
     const liveTeams = new Set();
     Object.values(groupMatches).forEach(m => {
@@ -566,14 +568,14 @@ function renderGroupView(groupId) {
     });
 
     const titleEl = document.getElementById('current-group-title');
-    if(titleEl) titleEl.innerText = groupHasLiveMatch ? `Group ${groupId} (As it stands)` : `Group ${groupId}`;
+    if (titleEl) titleEl.innerText = groupHasLiveMatch ? `Group ${groupId} (As it stands)` : `Group ${groupId}`;
 
     const standingsLive = calculateGroup(groupId, true);
     const standingsSettled = calculateGroup(groupId, false);
-    
+
     const settledPosMap = {};
     standingsSettled.forEach((t, i) => { settledPosMap[t.code] = i; });
-    
+
     let groupHasQualified = false;
 
     let html = `<div class="overflow-x-auto"><table class="w-full text-left border-collapse">
@@ -587,13 +589,13 @@ function renderGroupView(groupId) {
         const teamStatus = getTeamStatusData(team.code);
         const isQual = (teamStatus === 'green' || teamStatus === 'gold' || teamStatus === 'silver' || teamStatus === 'bronze' || teamStatus === 'purple');
         if (isQual) groupHasQualified = true;
-        
+
         let borderClass = index < 2 ? 'border-l-4 border-green-500' : (index === 2 ? 'border-l-4 border-yellow-500' : 'border-l-4 border-transparent');
         const bgClass = isQual ? 'bg-green-900/30 hover:bg-green-900/50' : 'hover:bg-gray-800';
         const assigned = isAssigned(team.code);
         const textClass = assigned ? 'text-[#D4AF37] font-extrabold' : 'text-white font-bold';
         const liveAsterisk = liveTeams.has(team.code) ? `<span class="text-red-500 ml-1 text-lg leading-none">*</span>` : '';
-        
+
         let arrowHtml = `<span class="w-3 inline-block"></span>`;
         if (groupHasLiveMatch) {
             const sPos = settledPosMap[team.code];
@@ -608,11 +610,11 @@ function renderGroupView(groupId) {
             <td class="p-3 text-center text-gray-300">${team.played}</td><td class="p-3 text-center text-gray-300">${team.won}</td>
             <td class="p-3 text-center text-gray-300">${team.drawn}</td><td class="p-3 text-center text-gray-300">${team.lost}</td>
             <td class="p-3 text-center text-gray-400 hidden sm:table-cell">${team.gf}</td><td class="p-3 text-center text-gray-400 hidden sm:table-cell">${team.ga}</td>
-            <td class="p-3 text-center ${team.gd > 0 ? 'text-green-400' : team.gd < 0 ? 'text-red-400' : 'text-gray-400'}">${team.gd > 0 ? '+'+team.gd : team.gd}</td>
+            <td class="p-3 text-center ${team.gd > 0 ? 'text-green-400' : team.gd < 0 ? 'text-red-400' : 'text-gray-400'}">${team.gd > 0 ? '+' + team.gd : team.gd}</td>
             <td class="p-3 text-center font-bold text-[#D4AF37]">${team.pts}</td></tr>`;
     });
     html += `</tbody></table></div>`;
-    
+
     if (groupHasLiveMatch) html += `<div class="mt-2 text-xs text-gray-400 font-bold"><span class="text-red-500 text-sm">*</span> Match in progress</div>`;
     if (groupHasQualified) html += `<div class="mt-2 text-xs text-gray-400 font-bold"><div class="w-3 h-3 bg-green-900/30 border border-green-500 inline-block align-middle mr-1"></div> Qualified for R32</div>`;
 
@@ -621,11 +623,11 @@ function renderGroupView(groupId) {
     const rawFixtures = [[teams[0], teams[1]], [teams[2], teams[3]], [teams[0], teams[2]], [teams[1], teams[3]], [teams[0], teams[3]], [teams[1], teams[2]]];
 
     rawFixtures.forEach((fixture, index) => {
-        const matchId = `G${groupId}-M${index+1}`; const matchData = groupMatches[matchId];
+        const matchId = `G${groupId}-M${index + 1}`; const matchData = groupMatches[matchId];
         const fixObj = getFixtureDetails(groupId, index);
         const t1Name = getDisplayName(fixture[0]); const t2Name = getDisplayName(fixture[1]);
-        
-        const channelLogo = fixObj.c === 'BBC' 
+
+        const channelLogo = fixObj.c === 'BBC'
             ? `<img src="BBC.png" class="h-4 ml-2 inline-block rounded-sm opacity-90" alt="BBC">`
             : (fixObj.c === 'ITV' ? `<img src="ITV.png" class="h-4 ml-2 inline-block rounded-sm opacity-90" alt="ITV">` : '');
 
@@ -656,7 +658,7 @@ function renderGroupView(groupId) {
 
 function renderThirdPlaceView() {
     const target = document.getElementById('group-table-target');
-    
+
     let globalGroupLiveMatch = false;
     const activeLiveTeams = new Set();
     Object.keys(groupStages).forEach(g => {
@@ -669,21 +671,21 @@ function renderThirdPlaceView() {
     });
 
     const titleEl = document.getElementById('current-group-title');
-    if(titleEl) {
-        titleEl.innerHTML = globalGroupLiveMatch 
-            ? `<div class="flex flex-col items-center"><span>Best 3rd-Placed Teams</span><span class="text-xs text-red-500 font-bold uppercase tracking-widest mt-1 animate-pulse">(As it stands)</span></div>` 
+    if (titleEl) {
+        titleEl.innerHTML = globalGroupLiveMatch
+            ? `<div class="flex flex-col items-center"><span>Best 3rd-Placed Teams</span><span class="text-xs text-red-500 font-bold uppercase tracking-widest mt-1 animate-pulse">(As it stands)</span></div>`
             : `Best 3rd-Placed Teams`;
     }
 
     const standingsLive = calculateThirdPlaceStandings(true);
     const standingsSettled = calculateThirdPlaceStandings(false);
-    
+
     const settledPosMap = {};
     standingsSettled.forEach((t, i) => { settledPosMap[t.code] = i; });
-    
+
     const bracket = getFullBracket(true);
     const headerText = isGroupStageComplete() ? 'R32 Opponent' : 'Potential R32 Opponent';
-    
+
     let groupHasQualified = false;
 
     let html = `<div class="overflow-x-auto"><table class="w-full text-left border-collapse">
@@ -697,13 +699,13 @@ function renderThirdPlaceView() {
         const teamStatus = getTeamStatusData(team.code);
         const isQual = (teamStatus === 'green' || teamStatus === 'gold' || teamStatus === 'silver' || teamStatus === 'bronze' || teamStatus === 'purple');
         if (isQual) groupHasQualified = true;
-        
+
         const borderClass = index < 8 ? 'border-l-4 border-green-500' : 'border-l-4 border-red-900 opacity-50';
         const bgClass = isQual ? 'bg-green-900/30 hover:bg-green-900/50' : 'hover:bg-gray-800';
         const assigned = isAssigned(team.code);
         const textClass = assigned ? 'text-[#D4AF37] font-extrabold' : 'text-white font-bold';
         const liveAsterisk = activeLiveTeams.has(team.code) ? `<span class="text-red-500 ml-1 text-lg leading-none">*</span>` : '';
-        
+
         let arrowHtml = `<span class="w-3 inline-block"></span>`;
         if (globalGroupLiveMatch) {
             const sPos = settledPosMap[team.code];
@@ -719,7 +721,7 @@ function renderThirdPlaceView() {
                 else arrowHtml = `<span class="w-3 inline-block text-center text-gray-600 font-bold text-xs">-</span>`;
             }
         }
-        
+
         let oppHtml = `<td class="p-3 text-gray-600 font-bold">-</td>`;
         if (index < 8) {
             const r32Match = (bracket.r32 || []).find(m => m.t2 === team.code);
@@ -727,18 +729,18 @@ function renderThirdPlaceView() {
                 oppHtml = `<td class="p-3 text-xs font-bold text-[#D4AF37] whitespace-nowrap">vs ${getDisplayName(r32Match.t1)}</td>`;
             }
         }
-        
+
         html += `<tr class="border-b border-gray-800 ${bgClass} ${borderClass}">
             <td class="p-3 font-bold text-gray-400 whitespace-nowrap"><div class="flex items-center space-x-1 md:space-x-2"><span>${index + 1}</span>${arrowHtml}</div></td>
             <td class="p-3 font-bold text-[#D4AF37]">${team.originGroup}</td>
             <td class="p-3 ${textClass}">${team.name}${liveAsterisk}</td><td class="p-3 text-center text-gray-300">${team.played}</td>
             <td class="p-3 text-center text-gray-300">${team.won}</td><td class="p-3 text-center text-gray-300">${team.drawn}</td>
             <td class="p-3 text-center text-gray-300">${team.lost}</td>
-            <td class="p-3 text-center ${team.gd > 0 ? 'text-green-400' : team.gd < 0 ? 'text-red-400' : 'text-gray-400'}">${team.gd > 0 ? '+'+team.gd : team.gd}</td>
+            <td class="p-3 text-center ${team.gd > 0 ? 'text-green-400' : team.gd < 0 ? 'text-red-400' : 'text-gray-400'}">${team.gd > 0 ? '+' + team.gd : team.gd}</td>
             <td class="p-3 text-center font-bold text-[#D4AF37]">${team.pts}</td>${oppHtml}</tr>`;
     });
-    html += `</tbody></table></div>`; 
-    
+    html += `</tbody></table></div>`;
+
     if (globalGroupLiveMatch) html += `<div class="mt-2 text-xs text-gray-400 font-bold"><span class="text-red-500 text-sm">*</span> Match in progress</div>`;
     if (groupHasQualified) html += `<div class="mt-2 text-xs text-gray-400 font-bold"><div class="w-3 h-3 bg-green-900/30 border border-green-500 inline-block align-middle mr-1"></div> Qualified for R32</div>`;
 
@@ -747,9 +749,29 @@ function renderThirdPlaceView() {
 
 function renderKnockoutsView(round) {
     const target = document.getElementById('knockout-target');
-    const bracket = getFullBracket(true); 
+    const titleEl = document.getElementById('current-ko-title');
+    const subtabs = document.getElementById('ko-subtabs-container');
+    const toggleBtn1 = document.getElementById('ko-view-toggle');
+    const toggleBtn2 = document.getElementById('ko-view-toggle-mobile');
+
+    if (knockoutViewMode === 'bracket') {
+        if (subtabs) subtabs.classList.add('hidden');
+        if (toggleBtn1) toggleBtn1.innerText = 'Show Rounds View';
+        if (toggleBtn2) toggleBtn2.innerText = 'Show Rounds View';
+        if (titleEl) titleEl.innerText = 'Full Tournament Bracket';
+        renderFullBracketView(target);
+        return;
+    } else {
+        if (subtabs) subtabs.classList.remove('hidden');
+        if (toggleBtn1) toggleBtn1.innerText = 'Bracket View';
+        if (toggleBtn2) toggleBtn2.innerText = 'Bracket View';
+        const titles = { 'r32': 'Round of 32', 'r16': 'Round of 16', 'qf': 'Quarter Finals', 'sf': 'Semi Finals', 'finals': 'Finals & 3rd Place' };
+        if (titleEl) titleEl.innerText = titles[round];
+    }
+
+    const bracket = getFullBracket(true);
     const matches = bracket[round] || [];
-    
+
     let html = ``;
     if (!isGroupStageComplete()) {
         const pCount = getPlayedGroupMatchCount();
@@ -764,19 +786,19 @@ function renderKnockoutsView(round) {
         const isFinal = match.id === 'FIN';
         const isPlaceHolderT1 = match.t1.startsWith("Winner") || match.t1.startsWith("Loser") || match.t1.startsWith("1st") || match.t1.startsWith("2nd") || match.t1.startsWith("3rd") || match.t1.startsWith("Match");
         const isPlaceHolderT2 = match.t2.startsWith("Winner") || match.t2.startsWith("Loser") || match.t2.startsWith("1st") || match.t2.startsWith("2nd") || match.t2.startsWith("3rd") || match.t2.startsWith("Match");
-        
+
         let t1Str = isPlaceHolderT1 ? match.t1 : getDisplayName(match.t1);
         let t2Str = isPlaceHolderT2 ? match.t2 : getDisplayName(match.t2);
-        const t1Assigned = isAssigned(match.t1); 
+        const t1Assigned = isAssigned(match.t1);
         const t2Assigned = isAssigned(match.t2);
 
         const res = dbMatches['knockouts']?.[match.id];
         let scoreUI = ``;
-        
+
         if (res && res.played) {
             let s1 = res.score1; let s2 = res.score2;
             let t1Won = false; let t2Won = false;
-            
+
             if (!res.inProgress) {
                 if (s1 > s2) t1Won = true;
                 else if (s2 > s1) t2Won = true;
@@ -824,10 +846,10 @@ function renderKnockoutsView(round) {
             `;
         }
 
-        const containerClass = isFinal 
+        const containerClass = isFinal
             ? "md:col-span-2 bg-gray-900 border-2 border-[#D4AF37] rounded-lg p-6 shadow-[0_0_20px_rgba(212,175,55,0.3)] flex flex-col"
             : `bg-gray-900 border ${res && res.inProgress ? 'border-red-900/50' : 'border-gray-700'} rounded-lg p-4 shadow-lg flex flex-col justify-between`;
-            
+
         const headerClass = isFinal ? "text-lg font-black text-[#D4AF37]" : "text-xs font-bold text-gray-500";
         const liveIndicator = (res && res.inProgress) ? `<div class="text-center w-full text-[10px] text-red-500 uppercase tracking-widest font-bold animate-pulse mt-3">Live Score</div>` : ``;
 
@@ -846,28 +868,146 @@ function renderKnockoutsView(round) {
     html += `</div>`; target.innerHTML = html;
 }
 
+function renderFullBracketView(target) {
+    const bracket = getFullBracket(true);
+
+    let html = `
+        <div id="bracket-scroll-container" class="overflow-x-auto pb-4 premium-scroll cursor-grab active:cursor-grabbing select-none" style="scroll-behavior: auto;">
+            <div class="flex min-w-max px-2 h-[800px] md:h-[900px] gap-4 md:gap-8 mx-auto" style="width: fit-content;">
+    `;
+
+    const getMatchById = (roundArr, id) => roundArr.find(m => m.id === id);
+
+    const renderMatchBox = (match) => {
+        if (!match) return `<div class="h-[72px] w-48 md:w-56 opacity-0 my-2"></div>`;
+        const res = dbMatches['knockouts']?.[match.id];
+
+        const isPlaceHolderT1 = match.t1 && (match.t1.startsWith("Winner") || match.t1.startsWith("Loser") || match.t1.startsWith("1st") || match.t1.startsWith("2nd") || match.t1.startsWith("3rd") || match.t1.startsWith("Match"));
+        const isPlaceHolderT2 = match.t2 && (match.t2.startsWith("Winner") || match.t2.startsWith("Loser") || match.t2.startsWith("1st") || match.t2.startsWith("2nd") || match.t2.startsWith("3rd") || match.t2.startsWith("Match"));
+
+        let t1Str = !isPlaceHolderT1 ? getDisplayName(match.t1) : `<span class="text-gray-500 font-normal italic text-[10px] md:text-xs">${match.t1}</span>`;
+        let t2Str = !isPlaceHolderT2 ? getDisplayName(match.t2) : `<span class="text-gray-500 font-normal italic text-[10px] md:text-xs">${match.t2}</span>`;
+
+        const t1Col = !isPlaceHolderT1 && isAssigned(match.t1) ? 'text-[#D4AF37]' : 'text-white';
+        const t2Col = !isPlaceHolderT2 && isAssigned(match.t2) ? 'text-[#D4AF37]' : 'text-white';
+
+        let s1 = '', s2 = '';
+        if (res && res.played) {
+            s1 = res.score1; s2 = res.score2;
+            if (res.pens) {
+                s1 += ` <span class="text-[9px] text-gray-400">(${res.pen1})</span>`;
+                s2 += ` <span class="text-[9px] text-gray-400">(${res.pen2})</span>`;
+            }
+        }
+
+        return `<div class="w-48 md:w-56 bg-black border ${res?.inProgress ? 'border-red-900/80 shadow-[0_0_10px_rgba(220,38,38,0.3)]' : 'border-gray-700'} rounded-lg p-2 text-xs shadow-lg flex flex-col justify-center h-[64px] md:h-[72px] relative z-10 transition-transform hover:scale-[1.02]">
+            <div class="text-gray-500 mb-1 flex justify-between items-center"><span class="text-[9px] md:text-[10px] uppercase tracking-wider font-bold">${match.title || match.id}</span><span class="text-gray-600 font-normal text-[9px] md:text-[10px] whitespace-nowrap">${match.date ? match.date.split(',')[0] : ''}</span></div>
+            <div class="flex justify-between items-center mb-0.5"><span class="truncate ${t1Col} font-bold mr-2 text-[11px] md:text-xs">${t1Str}</span><span class="font-bold ${res?.inProgress ? 'text-red-500' : 'text-[#D4AF37]'} shrink-0 text-xs">${s1}</span></div>
+            <div class="flex justify-between items-center"><span class="truncate ${t2Col} font-bold mr-2 text-[11px] md:text-xs">${t2Str}</span><span class="font-bold ${res?.inProgress ? 'text-red-500' : 'text-[#D4AF37]'} shrink-0 text-xs">${s2}</span></div>
+        </div>`;
+    };
+
+    const renderColumn = (title, matchIds, roundArr) => {
+        let colHtml = `<div class="flex flex-col h-full relative group">
+            <div class="text-[#D4AF37] font-bold text-center uppercase tracking-wider text-[10px] md:text-xs absolute -top-8 w-full">${title}</div>
+            <div class="flex flex-col justify-around h-full w-48 md:w-56 relative">`;
+        matchIds.forEach(id => {
+            const m = id ? getMatchById(roundArr, id) : null;
+            colHtml += renderMatchBox(m);
+        });
+        colHtml += `</div></div>`;
+        return colHtml;
+    };
+
+    // Left side: R32 -> R16 -> QF -> SF
+    html += renderColumn('Round of 32', ['R32-3', 'R32-6', 'R32-1', 'R32-4', 'R32-12', 'R32-11', 'R32-10', 'R32-9'], bracket.r32);
+    html += renderColumn('Round of 16', ['R16-2', 'R16-1', 'R16-5', 'R16-6'], bracket.r16);
+    html += renderColumn('Quarter Finals', ['QF-1', 'QF-2'], bracket.qf);
+    html += renderColumn('Semi Finals', ['SF-1'], bracket.sf);
+
+    // Center: Final & 3rd Place
+    html += `<div class="flex flex-col h-full relative mx-4 md:mx-8">
+        <div class="text-yellow-500 font-extrabold text-center uppercase tracking-widest text-xs md:text-sm absolute -top-10 w-full shadow-[0_0_10px_rgba(234,179,8,0.3)]">Finals</div>
+        <div class="flex flex-col justify-center items-center h-full space-y-16">
+            <div class="relative">
+                <div class="absolute -top-6 text-center w-full text-[#D4AF37] font-bold text-[10px] uppercase tracking-widest">World Cup Final</div>
+                <div class="transform scale-110 shadow-[0_0_20px_rgba(212,175,55,0.2)] rounded-lg">
+                    ${renderMatchBox(getMatchById(bracket.finals, 'FIN'))}
+                </div>
+            </div>
+            <div class="relative opacity-90">
+                <div class="absolute -top-6 text-center w-full text-gray-400 font-bold text-[10px] uppercase tracking-widest">3rd Place Playoff</div>
+                ${renderMatchBox(getMatchById(bracket.finals, '3RD'))}
+            </div>
+        </div>
+    </div>`;
+
+    // Right side: SF -> QF -> R16 -> R32
+    html += renderColumn('Semi Finals', ['SF-2'], bracket.sf);
+    html += renderColumn('Quarter Finals', ['QF-3', 'QF-4'], bracket.qf);
+    html += renderColumn('Round of 16', ['R16-3', 'R16-4', 'R16-7', 'R16-8'], bracket.r16);
+    html += renderColumn('Round of 32', ['R32-2', 'R32-5', 'R32-7', 'R32-8', 'R32-15', 'R32-14', 'R32-13', 'R32-16'], bracket.r32);
+
+    html += `</div></div>`;
+    target.innerHTML = html;
+
+    // Attach drag-to-scroll logic
+    const slider = document.getElementById('bracket-scroll-container');
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    slider.addEventListener('mousedown', (e) => {
+        isDown = true;
+        slider.classList.add('active');
+        startX = e.pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+    });
+    slider.addEventListener('mouseleave', () => {
+        isDown = false;
+        slider.classList.remove('active');
+    });
+    slider.addEventListener('mouseup', () => {
+        isDown = false;
+        slider.classList.remove('active');
+    });
+    slider.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - slider.offsetLeft;
+        const walk = (x - startX) * 2; // Scroll-fast
+        slider.scrollLeft = scrollLeft - walk;
+    });
+
+    // Center the bracket on load
+    setTimeout(() => {
+        const centerOffset = (slider.scrollWidth - slider.clientWidth) / 2;
+        slider.scrollLeft = centerOffset;
+    }, 50);
+}
+
 function renderFixturesView() {
     const target = document.getElementById('fixtures-target');
     const allMatches = [];
-    
+
     Object.keys(groupStages).forEach(groupId => {
         const teams = groupStages[groupId];
         const rawFixtures = [[teams[0], teams[1]], [teams[2], teams[3]], [teams[0], teams[2]], [teams[1], teams[3]], [teams[0], teams[3]], [teams[1], teams[2]]];
         rawFixtures.forEach((fixture, index) => {
-            const mId = `G${groupId}-M${index+1}`;
+            const mId = `G${groupId}-M${index + 1}`;
             const fixDetails = getFixtureDetails(groupId, index);
             allMatches.push({ id: mId, t1: fixture[0], t2: fixture[1], dateStr: fixDetails.d, channel: fixDetails.c, round: `Grp ${groupId}`, isGroup: true, originGroup: groupId });
         });
     });
 
-    const bracket = getFullBracket(false); 
+    const bracket = getFullBracket(false);
     const roundNames = { 'r32': 'R32', 'r16': 'R16', 'qf': 'QF', 'sf': 'SF', 'finals': 'Final' };
-    
+
     ['r32', 'r16', 'qf', 'sf', 'finals'].forEach(roundKey => {
         (bracket[roundKey] || []).forEach(m => {
             let rName = roundNames[roundKey];
             if (m.id === '3RD') rName = '3rd Pl';
-            
+
             let channelStr = "";
             if (m.id === 'FIN') channelStr = "BOTH";
             else channelStr = dbMatches['knockouts']?.[m.id]?.channel || "";
@@ -883,7 +1023,7 @@ function renderFixturesView() {
         m.timeString = dateParts[1] ? dateParts[1].replace('BST', '').trim() : '';
         const matchParse = m.dateStr.match(/(\d+\s[A-Za-z]+),\s(\d+:\d+)/);
         m.timestamp = matchParse ? Date.parse(`${matchParse[1]} 2026 ${matchParse[2]} GMT+0100`) : 0;
-        
+
         if (!groupedMatches[dayString]) groupedMatches[dayString] = [];
         groupedMatches[dayString].push(m);
     });
@@ -903,7 +1043,7 @@ function renderFixturesView() {
     sortedDays.forEach(day => {
         groupedMatches[day].sort((a, b) => a.timestamp - b.timestamp);
         html += `<div class="bg-gray-800 text-[#D4AF37] font-bold px-4 py-2 uppercase tracking-widest text-[10px] md:text-xs border-y border-gray-700 shadow-md">${day}</div>`;
-        
+
         groupedMatches[day].forEach(m => {
             let res = m.isGroup ? dbMatches[m.originGroup]?.[m.id] : dbMatches['knockouts']?.[m.id];
             let matchUI = ""; let channelUI = "";
@@ -911,7 +1051,7 @@ function renderFixturesView() {
             if (res && res.played) {
                 let s1 = res.score1; let s2 = res.score2;
                 let t1Won = false; let t2Won = false;
-                
+
                 if (!res.inProgress) {
                     if (s1 > s2) t1Won = true;
                     else if (s2 > s1) t2Won = true;
@@ -928,8 +1068,8 @@ function renderFixturesView() {
                     s1 = `${s1} <span class="text-[10px] text-gray-400 font-normal">(${res.pen1})</span>`;
                     s2 = `<span class="text-[10px] text-gray-400 font-normal">(${res.pen2})</span> ${s2}`;
                 }
-                
-                const scoreBox = res.inProgress 
+
+                const scoreBox = res.inProgress
                     ? `<div class="bg-gray-900 border border-red-800/50 rounded px-1.5 py-0.5 text-red-500 font-bold text-xs md:text-sm tracking-wider flex items-center shadow-[0_0_8px_rgba(220,38,38,0.3)] animate-pulse mx-1 shrink-0 whitespace-nowrap min-w-[50px] justify-center">${s1} - ${s2}</div>`
                     : `<div class="bg-gray-900 rounded px-1.5 py-0.5 text-[#D4AF37] font-bold text-xs md:text-sm tracking-wider mx-1 shrink-0 whitespace-nowrap min-w-[50px] text-center">${s1} - ${s2}</div>`;
 
@@ -944,7 +1084,7 @@ function renderFixturesView() {
                     <div class="text-gray-600 text-[10px] md:text-xs px-1 md:px-2 font-bold shrink-0">v</div>
                     <div class="text-left flex-1 leading-tight truncate px-1">${getFormattedTeamName(m.t2)}</div>
                 </div>`;
-                
+
                 if (m.channel === 'BBC') channelUI = `<img src="BBC.png" class="h-3 md:h-4 rounded-sm opacity-90" alt="BBC">`;
                 else if (m.channel === 'ITV') channelUI = `<img src="ITV.png" class="h-3 md:h-4 rounded-sm opacity-90" alt="ITV">`;
                 else if (m.channel === 'BOTH') channelUI = `<img src="BBC.png" class="h-3 md:h-4 rounded-sm opacity-90" alt="BBC"><img src="ITV.png" class="h-3 md:h-4 rounded-sm opacity-90 ml-1" alt="ITV">`;
