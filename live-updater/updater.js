@@ -108,28 +108,42 @@ async function fetchLiveScores() {
             
             let targetGroup = null;
             let targetMatchId = null;
+            let isFlipped = false;
 
             // Search groups
             ['A','B','C','D','E','F','G','H','I','J','K','L'].forEach(grp => {
                 const groupMatches = allMatches[grp] || {};
                 Object.keys(groupMatches).forEach(mId => {
                     const m = groupMatches[mId];
-                    if ((m.team1 === dbCode1 && m.team2 === dbCode2) || (m.team1 === dbCode2 && m.team2 === dbCode1)) {
-                        targetGroup = grp; targetMatchId = mId;
+                    if (m.team1 === dbCode1 && m.team2 === dbCode2) {
+                        targetGroup = grp; targetMatchId = mId; isFlipped = false;
+                    } else if (m.team1 === dbCode2 && m.team2 === dbCode1) {
+                        targetGroup = grp; targetMatchId = mId; isFlipped = true;
                     }
                 });
             });
 
             // Update Group Match
             if (targetMatchId) {
+                const finalScore1 = isFlipped ? score2 : score1;
+                const finalScore2 = isFlipped ? score1 : score2;
+                
+                const existingMatch = allMatches[targetGroup][targetMatchId];
+                // CRITICAL SAFEGUARD: If the match is already finished in the database, DO NOT overwrite it.
+                // This protects your manual edits in the admin panel for past games!
+                if (existingMatch && existingMatch.played && !existingMatch.inProgress && !inProgress) {
+                    console.log(`Match ${targetMatchId} is already marked as finished. Skipping API overwrite.`);
+                    continue;
+                }
+                
                 const payload = {
-                    score1: score1,
-                    score2: score2,
+                    score1: finalScore1,
+                    score2: finalScore2,
                     played: true,
                     inProgress: inProgress,
                     time: timeStr
                 };
-                console.log(`Updating Group Match ${targetMatchId} (${dbCode1} vs ${dbCode2}): ${score1}-${score2} [${timeStr}]`);
+                console.log(`Updating Group Match ${targetMatchId} (${isFlipped ? dbCode2 : dbCode1} vs ${isFlipped ? dbCode1 : dbCode2}): ${finalScore1}-${finalScore2} [${timeStr}]`);
                 await updateFirebase(`matches/${targetGroup}/${targetMatchId}`, payload);
             } else {
                 // If not found in groups, search knockouts
@@ -145,10 +159,15 @@ async function fetchLiveScores() {
     }
 }
 
-// Run immediately on start
-fetchLiveScores();
-
-// Keep running every 2 minutes
-setInterval(fetchLiveScores, 120000);
-
-console.log("Football-data.org Auto Updater started...");
+if (process.env.GITHUB_ACTIONS) {
+    // Run once and exit when triggered by GitHub Actions
+    fetchLiveScores().then(() => {
+        console.log("GitHub Action Updater finished successfully.");
+        process.exit(0);
+    });
+} else {
+    // Run immediately and then loop every 2 minutes when run locally
+    fetchLiveScores();
+    setInterval(fetchLiveScores, 120000);
+    console.log("Local Auto Updater started... Checking every 2 minutes. Press Ctrl+C to stop.");
+}
