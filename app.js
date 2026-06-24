@@ -302,6 +302,79 @@ function getFullBracket(predict = true) {
     return { r32: r32 || [], r16: r16 || [], qf: qf || [], sf: sf || [], finals: finals || [] };
 }
 
+function isGuaranteedTop2(groupId, teamCode) {
+    const teams = groupStages[groupId];
+    const groupMatches = dbMatches[groupId] || {};
+    const rawFixtures = [
+        [teams[0], teams[1]], [teams[2], teams[3]], 
+        [teams[0], teams[2]], [teams[1], teams[3]], 
+        [teams[0], teams[3]], [teams[1], teams[2]]
+    ];
+    
+    const unplayedMatches = [];
+    const basePts = {}; teams.forEach(t => basePts[t] = 0);
+    const baseH2H = {}; 
+    const getH2hKey = (tA, tB) => tA < tB ? `${tA}-${tB}` : `${tB}-${tA}`;
+    
+    rawFixtures.forEach((fixture, index) => {
+        const matchId = `G${groupId}-M${index + 1}`;
+        const matchData = groupMatches[matchId];
+        const t1 = fixture[0]; const t2 = fixture[1];
+        
+        if (matchData && matchData.played && !matchData.inProgress) {
+            let t1Goals = matchData.score1; let t2Goals = matchData.score2;
+            if (matchData.team1 === t2) { t1Goals = matchData.score2; t2Goals = matchData.score1; }
+            if (t1Goals > t2Goals) {
+                basePts[t1] += 3; baseH2H[getH2hKey(t1, t2)] = t1;
+            } else if (t1Goals < t2Goals) {
+                basePts[t2] += 3; baseH2H[getH2hKey(t1, t2)] = t2;
+            } else {
+                basePts[t1] += 1; basePts[t2] += 1; baseH2H[getH2hKey(t1, t2)] = 'draw';
+            }
+        } else {
+            unplayedMatches.push({t1, t2});
+        }
+    });
+    
+    let guaranteedTop2 = true;
+    function simulate(matchIndex, currentPts, currentH2H) {
+        if (!guaranteedTop2) return; 
+        if (matchIndex === unplayedMatches.length) {
+            let placedAheadCount = 0;
+            for (let i=0; i<teams.length; i++) {
+                const t = teams[i];
+                if (t === teamCode) continue;
+                if (currentPts[t] > currentPts[teamCode]) {
+                    placedAheadCount++;
+                } else if (currentPts[t] === currentPts[teamCode]) {
+                    const winner = currentH2H[getH2hKey(teamCode, t)];
+                    if (winner !== teamCode) placedAheadCount++;
+                }
+            }
+            if (placedAheadCount >= 2) guaranteedTop2 = false;
+            return;
+        }
+        
+        const m = unplayedMatches[matchIndex];
+        const h2hKey = getH2hKey(m.t1, m.t2);
+        
+        currentPts[m.t1] += 3; currentH2H[h2hKey] = m.t1;
+        simulate(matchIndex + 1, currentPts, currentH2H);
+        currentPts[m.t1] -= 3;
+        
+        currentPts[m.t2] += 3; currentH2H[h2hKey] = m.t2;
+        simulate(matchIndex + 1, currentPts, currentH2H);
+        currentPts[m.t2] -= 3;
+        
+        currentPts[m.t1] += 1; currentPts[m.t2] += 1; currentH2H[h2hKey] = 'draw';
+        simulate(matchIndex + 1, currentPts, currentH2H);
+        currentPts[m.t1] -= 1; currentPts[m.t2] -= 1;
+    }
+    
+    simulate(0, basePts, baseH2H);
+    return guaranteedTop2;
+}
+
 function getTeamStatusData(code) {
     const isGroupComplete = isGroupStageComplete();
     const phase = getCurrentPhase();
@@ -358,17 +431,8 @@ function getTeamStatusData(code) {
     }
 
     const groupId = Object.keys(groupStages).find(g => groupStages[g].includes(code));
-    const standings = calculateGroup(groupId, true);
+    const standings = calculateGroup(groupId, false);
     const tData = standings.find(t => t.code === code);
-
-    const maxPts = tData.pts + (3 - tData.played) * 3;
-    const thirdEntry = standings[2];
-    if (maxPts < thirdEntry.pts) return 'red';
-
-    const tieH2HTeam = (maxPts === thirdEntry.pts && tData.code !== thirdEntry.code)
-        ? getGroupDirectMatchResult(groupId, code, thirdEntry.code)
-        : null;
-    if (tieH2HTeam === -1) return 'red';
 
     const groupMatches = dbMatches[groupId] || {};
     const playedInGroup = Object.values(groupMatches).filter(m => m && m.played && !m.inProgress).length;
@@ -377,9 +441,16 @@ function getTeamStatusData(code) {
         if (standings[0].code === code || standings[1].code === code) return 'green';
         if (standings[3].code === code) return 'red';
     } else {
-        const othersMax = standings.filter(t => t.code !== code).map(t => t.pts + (3 - t.played) * 3).sort((a, b) => b - a);
-        const thirdBestMax = othersMax[1] || 0;
-        if (tData.pts > thirdBestMax) return 'green';
+        if (isGuaranteedTop2(groupId, code)) return 'green';
+
+        const maxPts = tData.pts + (3 - tData.played) * 3;
+        const thirdEntry = standings[2];
+        if (maxPts < thirdEntry.pts) return 'red';
+
+        const tieH2HTeam = (maxPts === thirdEntry.pts && tData.code !== thirdEntry.code)
+            ? getGroupDirectMatchResult(groupId, code, thirdEntry.code)
+            : null;
+        if (tieH2HTeam === -1) return 'red';
     }
 
     return 'blue';
