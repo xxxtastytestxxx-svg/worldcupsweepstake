@@ -370,9 +370,17 @@ function getTeamStatusData(code) {
         : null;
     if (tieH2HTeam === -1) return 'red';
 
-    const othersMax = standings.filter(t => t.code !== code).map(t => t.pts + (3 - t.played) * 3).sort((a, b) => b - a);
-    const thirdBestMax = othersMax[1] || 0;
-    if (tData.pts > thirdBestMax) return 'green';
+    const groupMatches = dbMatches[groupId] || {};
+    const playedInGroup = Object.values(groupMatches).filter(m => m && m.played && !m.inProgress).length;
+
+    if (playedInGroup === 6) {
+        if (standings[0].code === code || standings[1].code === code) return 'green';
+        if (standings[3].code === code) return 'red';
+    } else {
+        const othersMax = standings.filter(t => t.code !== code).map(t => t.pts + (3 - t.played) * 3).sort((a, b) => b - a);
+        const thirdBestMax = othersMax[1] || 0;
+        if (tData.pts > thirdBestMax) return 'green';
+    }
 
     return 'blue';
 }

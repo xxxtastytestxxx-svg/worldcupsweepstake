@@ -16,13 +16,13 @@ if (!API_TOKEN) {
 // football-data.org internal team mapping (we will need to adjust IDs when the World Cup endpoints are fully published)
 // Since the 2026 WC teams aren't fully known, this is a generalized mapper to match 3-letter codes used in your DB
 const TLA_TO_CODE = {
-    "ARG": "ARG", "AUS": "AUS", "AUT": "AUT", "BEL": "BEL", "BRA": "BRA", "COL": "COL", 
-    "CRO": "CRO", "ECU": "ECU", "ENG": "ENG", "FRA": "FRA", "GER": "GER", "IRN": "IRN", 
-    "JPN": "JPN", "MEX": "MEX", "MAR": "MAR", "NED": "NED", "POR": "POR", "SEN": "SEN", 
+    "ARG": "ARG", "AUS": "AUS", "AUT": "AUT", "BEL": "BEL", "BRA": "BRA", "COL": "COL",
+    "CRO": "CRO", "ECU": "ECU", "ENG": "ENG", "FRA": "FRA", "GER": "GER", "IRN": "IRN",
+    "JPN": "JPN", "MEX": "MEX", "MAR": "MAR", "NED": "NED", "POR": "POR", "SEN": "SEN",
     "KOR": "KOR", "ESP": "ESP", "SUI": "SUI", "TUR": "TUR", "URU": "URU", "USA": "USA",
-    "ALG": "ALG", "BIH": "BIH", "CAN": "CAN", "CPV": "CPV", "CIV": "CIV", "CUW": "CUW", 
-    "CZE": "CZE", "COD": "COD", "EGY": "EGY", "GHA": "GHA", "HAI": "HAI", "IRQ": "IRQ", 
-    "JOR": "JOR", "NZL": "NZL", "NOR": "NOR", "PAN": "PAN", "PAR": "PAR", "QAT": "QAT", 
+    "ALG": "ALG", "BIH": "BIH", "CAN": "CAN", "CPV": "CPV", "CIV": "CIV", "CUW": "CUW",
+    "CZE": "CZE", "COD": "COD", "EGY": "EGY", "GHA": "GHA", "HAI": "HAI", "IRQ": "IRQ",
+    "JOR": "JOR", "NZL": "NZL", "NOR": "NOR", "PAN": "PAN", "PAR": "PAR", "QAT": "QAT",
     "KSA": "KSA", "SCO": "SCO", "RSA": "RSA", "SWE": "SWE", "TUN": "TUN", "UZB": "UZB"
 };
 
@@ -50,7 +50,7 @@ async function fetchLiveScores() {
         const response = await fetch('https://api.football-data.org/v4/competitions/WC/matches?status=IN_PLAY,PAUSED,FINISHED', {
             headers: { 'X-Auth-Token': API_TOKEN }
         });
-        
+
         if (!response.ok) {
             console.error(`API Fetch failed: ${response.status} ${response.statusText}`);
             return;
@@ -65,9 +65,9 @@ async function fetchLiveScores() {
         for (const match of data.matches) {
             const t1TLA = match.homeTeam.tla;
             const t2TLA = match.awayTeam.tla;
-            
+
             if (!t1TLA || !t2TLA) continue;
-            
+
             const dbCode1 = TLA_TO_CODE[t1TLA];
             const dbCode2 = TLA_TO_CODE[t2TLA];
 
@@ -76,10 +76,10 @@ async function fetchLiveScores() {
             const isFinished = match.status === 'FINISHED' || match.status === 'AWARDED';
             const inProgress = match.status === 'IN_PLAY' || match.status === 'PAUSED';
             const isHalfTime = match.status === 'PAUSED';
-            
+
             const score1 = match.score.fullTime.home ?? 0;
             const score2 = match.score.fullTime.away ?? 0;
-            
+
             // Format time string
             let timeStr = "";
             if (isFinished) timeStr = "FT";
@@ -105,13 +105,13 @@ async function fetchLiveScores() {
             // For now, we will query Firebase to find a match that has these two teams.
             const fbRes = await fetch(`${FIREBASE_DB_URL}/matches.json`);
             const allMatches = await fbRes.json();
-            
+
             let targetGroup = null;
             let targetMatchId = null;
             let isFlipped = false;
 
             // Search groups
-            ['A','B','C','D','E','F','G','H','I','J','K','L'].forEach(grp => {
+            ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'].forEach(grp => {
                 const groupMatches = allMatches[grp] || {};
                 Object.keys(groupMatches).forEach(mId => {
                     const m = groupMatches[mId];
@@ -127,7 +127,7 @@ async function fetchLiveScores() {
             if (targetMatchId) {
                 const finalScore1 = isFlipped ? score2 : score1;
                 const finalScore2 = isFlipped ? score1 : score2;
-                
+
                 const existingMatch = allMatches[targetGroup][targetMatchId];
                 // CRITICAL SAFEGUARD: If the match is already finished in the database, DO NOT overwrite it.
                 // This protects your manual edits in the admin panel for past games!
@@ -135,7 +135,7 @@ async function fetchLiveScores() {
                     console.log(`Match ${targetMatchId} is already marked as finished. Skipping API overwrite.`);
                     continue;
                 }
-                
+
                 const payload = {
                     score1: finalScore1,
                     score2: finalScore2,
