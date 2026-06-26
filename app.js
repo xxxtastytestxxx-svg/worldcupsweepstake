@@ -375,6 +375,57 @@ function isGuaranteedTop2(groupId, teamCode) {
     return guaranteedTop2;
 }
 
+function isGuaranteedBestThird(teamCode) {
+    const targetGroupId = Object.keys(groupStages).find(g => groupStages[g].includes(teamCode));
+    const targetStandings = calculateGroup(targetGroupId, false);
+    const targetTeamData = targetStandings.find(t => t.code === teamCode);
+    
+    if (targetTeamData.played < 3) return false;
+
+    const targetPos = targetStandings.findIndex(t => t.code === teamCode);
+    if (targetPos > 2) return false; 
+
+    const t4 = targetStandings[3];
+    if (t4.pts + (3 - t4.played) * 3 >= targetTeamData.pts) {
+        return false;
+    }
+
+    let betterGroupsCount = 0;
+    for (const g of Object.keys(groupStages)) {
+        if (g === targetGroupId) continue;
+        
+        const gMatches = dbMatches[g] || {};
+        const gPlayed = Object.values(gMatches).filter(m => m && m.played && !m.inProgress).length;
+        const gStandings = calculateGroup(g, false);
+        
+        if (gPlayed === 6) {
+            const gThird = gStandings[2];
+            if (gThird.pts > targetTeamData.pts) {
+                betterGroupsCount++;
+            } else if (gThird.pts === targetTeamData.pts) {
+                if (gThird.gd > targetTeamData.gd) { betterGroupsCount++; }
+                else if (gThird.gd === targetTeamData.gd) {
+                    if (gThird.gf > targetTeamData.gf) { betterGroupsCount++; }
+                    else if (gThird.gf === targetTeamData.gf) {
+                        if (gThird.conduct > targetTeamData.conduct) { betterGroupsCount++; }
+                        else if (gThird.conduct === targetTeamData.conduct) {
+                            if (teamsData[gThird.code].fifa < teamsData[targetTeamData.code].fifa) { betterGroupsCount++; }
+                        }
+                    }
+                }
+            }
+        } else {
+            const maxPtsArr = gStandings.map(t => t.pts + (3 - t.played) * 3).sort((a, b) => b - a);
+            const maxThirdPts = maxPtsArr[2];
+            if (maxThirdPts >= targetTeamData.pts) {
+                betterGroupsCount++;
+            }
+        }
+    }
+    
+    return betterGroupsCount < 8;
+}
+
 function getTeamStatusData(code) {
     const isGroupComplete = isGroupStageComplete();
     const phase = getCurrentPhase();
@@ -440,8 +491,10 @@ function getTeamStatusData(code) {
     if (playedInGroup === 6) {
         if (standings[0].code === code || standings[1].code === code) return 'green';
         if (standings[3].code === code) return 'red';
+        if (standings[2].code === code && isGuaranteedBestThird(code)) return 'green';
     } else {
         if (isGuaranteedTop2(groupId, code)) return 'green';
+        if (isGuaranteedBestThird(code)) return 'green';
 
         const maxPts = tData.pts + (3 - tData.played) * 3;
         const thirdEntry = standings[2];
