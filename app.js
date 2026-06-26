@@ -199,8 +199,35 @@ function getFullBracket(predict = true) {
     const comboString = top8Thirds.map(t => t.originGroup).sort().join('');
     const matrixRow = dbCombinations[comboString] || {};
 
+    const validCombos = !predict && !isGroupStageComplete() ? getValidCombinations() : [];
+
     const getThird = (matchId) => {
-        if (!predict && !isGroupStageComplete()) return "3rd Place Team";
+        if (!predict && !isGroupStageComplete()) {
+            if (validCombos.length > 0) {
+                let consistentGroup = null;
+                let isConsistent = true;
+                
+                for (let combo of validCombos) {
+                    const reqGroup = dbCombinations[combo]?.[matchId];
+                    if (!reqGroup) { isConsistent = false; break; }
+                    if (consistentGroup === null) {
+                        consistentGroup = reqGroup;
+                    } else if (consistentGroup !== reqGroup) {
+                        isConsistent = false;
+                        break;
+                    }
+                }
+                
+                if (isConsistent && consistentGroup) {
+                    const grpStandings = calculateGroup(consistentGroup, false);
+                    const grpThird = grpStandings[2];
+                    if (grpThird.played === 3 && isGuaranteedBestThird(grpThird.code)) {
+                        return grpThird.code;
+                    }
+                }
+            }
+            return "3rd Place Team";
+        }
         const reqGroup = matrixRow[matchId];
         if (!reqGroup) return "3rd Place Team";
         const team = thirds.find(t => t.originGroup === reqGroup);
@@ -424,6 +451,79 @@ function isGuaranteedBestThird(teamCode) {
     }
     
     return betterGroupsCount < 8;
+}
+
+function getValidCombinations() {
+    const standingsByGroup = {};
+    const playedByGroup = {};
+    Object.keys(groupStages).forEach(g => {
+        standingsByGroup[g] = calculateGroup(g, false);
+        const gMatches = dbMatches[g] || {};
+        playedByGroup[g] = Object.values(gMatches).filter(m => m && m.played && !m.inProgress).length;
+    });
+
+    const guaranteedGroups = [];
+    Object.keys(groupStages).forEach(g => {
+        const third = standingsByGroup[g][2];
+        if (third.played === 3 && isGuaranteedBestThird(third.code)) {
+            guaranteedGroups.push(g);
+        }
+    });
+    
+    const eliminatedGroups = [];
+    Object.keys(groupStages).forEach(g => {
+        if (guaranteedGroups.includes(g)) return;
+
+        const standings = standingsByGroup[g];
+        const gPlayed = playedByGroup[g];
+        
+        let maxThirdPts;
+        if (gPlayed === 6) {
+            maxThirdPts = standings[2].pts;
+        } else {
+            const maxPtsArr = standings.map(t => t.pts + (3 - t.played) * 3).sort((a,b)=>b-a);
+            maxThirdPts = maxPtsArr[2];
+        }
+        
+        let strictlyBetterCount = 0;
+        Object.keys(groupStages).forEach(otherG => {
+            if (otherG === g) return;
+            const otherMin = standingsByGroup[otherG][2];
+            const otherPlayed = playedByGroup[otherG];
+            
+            if (otherMin.pts > maxThirdPts) {
+                strictlyBetterCount++;
+            } else if (otherMin.pts === maxThirdPts && otherPlayed === 6 && gPlayed === 6) {
+                 const gThird = standings[2];
+                 if (otherMin.gd > gThird.gd) strictlyBetterCount++;
+                 else if (otherMin.gd === gThird.gd) {
+                     if (otherMin.gf > gThird.gf) strictlyBetterCount++;
+                     else if (otherMin.gf === gThird.gf) {
+                         if (otherMin.conduct > gThird.conduct) strictlyBetterCount++;
+                         else if (otherMin.conduct === gThird.conduct) {
+                             if (teamsData[otherMin.code].fifa < teamsData[gThird.code].fifa) strictlyBetterCount++;
+                         }
+                     }
+                 }
+            }
+        });
+        
+        if (strictlyBetterCount >= 8) {
+            eliminatedGroups.push(g);
+        }
+    });
+
+    const allCombos = Object.keys(dbCombinations);
+    const valid = allCombos.filter(combo => {
+        for (let q of guaranteedGroups) {
+            if (!combo.includes(q)) return false;
+        }
+        for (let e of eliminatedGroups) {
+            if (combo.includes(e)) return false;
+        }
+        return true;
+    });
+    return valid.length > 0 ? valid : allCombos;
 }
 
 function getTeamStatusData(code) {
