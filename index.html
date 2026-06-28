@@ -58,22 +58,22 @@
 
         <div class="max-w-5xl mx-auto px-4 bg-black pt-2">
             <div class="flex w-full border-b border-gray-800 overflow-x-auto premium-scroll">
-                <button onclick="switchMainTab('groups')" id="main-tab-groups"
-                    class="flex-1 py-3 px-4 text-center text-[#D4AF37] border-b-2 border-[#D4AF37] font-bold tracking-wider uppercase transition-all text-xs md:text-base whitespace-nowrap">Group
-                    Stages</button>
                 <button onclick="switchMainTab('knockouts')" id="main-tab-knockouts"
-                    class="flex-1 py-3 px-4 text-center text-gray-500 border-b-2 border-transparent font-bold tracking-wider uppercase hover:text-white transition-all text-xs md:text-base whitespace-nowrap">Knockouts</button>
+                    class="flex-1 py-3 px-4 text-center text-[#D4AF37] border-b-2 border-[#D4AF37] font-bold tracking-wider uppercase transition-all text-xs md:text-base whitespace-nowrap">Knockouts</button>
                 <button onclick="switchMainTab('status')" id="main-tab-status"
                     class="flex-1 py-3 px-4 text-center text-gray-500 border-b-2 border-transparent font-bold tracking-wider uppercase hover:text-white transition-all text-xs md:text-base whitespace-nowrap">Status</button>
                 <button onclick="switchMainTab('fixtures')" id="main-tab-fixtures"
                     class="flex-1 py-3 px-4 text-center text-gray-500 border-b-2 border-transparent font-bold tracking-wider uppercase hover:text-white transition-all text-xs md:text-base whitespace-nowrap">Fixtures</button>
+                <button onclick="switchMainTab('groups')" id="main-tab-groups"
+                    class="flex-1 py-3 px-4 text-center text-gray-500 border-b-2 border-transparent font-bold tracking-wider uppercase hover:text-white transition-all text-xs md:text-base whitespace-nowrap">Group
+                    Stages</button>
             </div>
         </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 mt-6">
 
-        <div id="view-groups" class="block">
+        <div id="view-groups" class="hidden">
             <div class="flex overflow-x-auto space-x-3 mb-6 pb-2 premium-scroll" id="group-subtabs"></div>
             <div id="groups-content-container"
                 class="bg-gray-900 border border-[#D4AF37] rounded-lg p-4 shadow-[0_4px_20px_rgba(0,0,0,0.8)]">
@@ -85,7 +85,7 @@
             </div>
         </div>
 
-        <div id="view-knockouts" class="hidden">
+        <div id="view-knockouts" class="block">
             <div class="flex justify-between items-center mb-6">
                 <div class="flex overflow-x-auto space-x-3 pb-2 premium-scroll" id="ko-subtabs-container">
                     <button onclick="switchKnockoutTab('r32')" id="ko-tab-r32"

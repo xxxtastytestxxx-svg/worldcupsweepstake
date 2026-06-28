@@ -36,11 +36,20 @@ const groupStages = {
 };
 
 let dbTeams = {}; let dbMatches = {}; let dbCombinations = {};
-let activeMainTab = 'groups'; let activeGroupTab = 'A'; let activeKoTab = 'r32';
+let activeMainTab = 'knockouts'; let activeGroupTab = 'A'; let activeKoTab = 'r32';
 let knockoutViewMode = 'rounds';
+let initialTabSet = false;
 
 onValue(ref(db, 'teams'), (snapshot) => { dbTeams = snapshot.val() || {}; renderCurrentView(); });
-onValue(ref(db, 'matches'), (snapshot) => { dbMatches = snapshot.val() || {}; renderCurrentView(); });
+onValue(ref(db, 'matches'), (snapshot) => { 
+    dbMatches = snapshot.val() || {}; 
+    if (!initialTabSet && Object.keys(dbMatches).length > 0) {
+        initialTabSet = true;
+        const newTab = isGroupStageComplete() ? 'knockouts' : 'groups';
+        if (window.switchMainTab) window.switchMainTab(newTab);
+    }
+    renderCurrentView(); 
+});
 onValue(ref(db, 'combinations'), (snapshot) => { dbCombinations = snapshot.val() || {}; renderCurrentView(); });
 
 window.addEventListener('mainTabChanged', (e) => { activeMainTab = e.detail; renderCurrentView(); });
@@ -819,7 +828,13 @@ function renderGroupView(groupId) {
 
     standingsLive.forEach((team, index) => {
         const teamStatus = getTeamStatusData(team.code);
-        const isQual = (teamStatus === 'green' || teamStatus === 'gold' || teamStatus === 'silver' || teamStatus === 'bronze' || teamStatus === 'purple');
+        let isQual = false;
+        if (isGroupStageComplete()) {
+            const bracket = getFullBracket(true);
+            isQual = (bracket.r32 || []).some(m => m.t1 === team.code || m.t2 === team.code);
+        } else {
+            isQual = (teamStatus === 'green' || teamStatus === 'gold' || teamStatus === 'silver' || teamStatus === 'bronze' || teamStatus === 'purple');
+        }
         if (isQual) groupHasQualified = true;
 
         let borderClass = index < 2 ? 'border-l-4 border-green-500' : (index === 2 ? 'border-l-4 border-yellow-500' : 'border-l-4 border-transparent');
@@ -932,7 +947,13 @@ function renderThirdPlaceView() {
 
     standingsLive.forEach((team, index) => {
         const teamStatus = getTeamStatusData(team.code);
-        const isQual = (teamStatus === 'green' || teamStatus === 'gold' || teamStatus === 'silver' || teamStatus === 'bronze' || teamStatus === 'purple');
+        let isQual = false;
+        if (isGroupStageComplete()) {
+            const bracket = getFullBracket(true);
+            isQual = (bracket.r32 || []).some(m => m.t1 === team.code || m.t2 === team.code);
+        } else {
+            isQual = (teamStatus === 'green' || teamStatus === 'gold' || teamStatus === 'silver' || teamStatus === 'bronze' || teamStatus === 'purple');
+        }
         if (isQual) groupHasQualified = true;
 
         const borderClass = index < 8 ? 'border-l-4 border-green-500' : 'border-l-4 border-red-900 opacity-50';
